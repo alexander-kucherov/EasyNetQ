@@ -12,7 +12,6 @@ public class MockBuilder : IDisposable
     private readonly IServiceProvider serviceProvider;
     private readonly IBus bus;
 
-    private readonly IBasicProperties basicProperties = new RabbitMQ.Client.BasicProperties();
     private readonly Stack<IChannel> channelPool = new();
     private readonly List<IChannel> channels = new();
     private readonly IConnection connection = Substitute.For<IConnection>();
@@ -40,11 +39,10 @@ public class MockBuilder : IDisposable
 
         connection.IsOpen.Returns(true);
         connection.Endpoint.Returns(new AmqpTcpEndpoint("localhost"));
-        connection.CreateChannelAsync().Returns(async _ =>
+        connection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), Arg.Any<CancellationToken>()).Returns(async _ =>
         {
             var channel = channelPool.Pop();
             channels.Add(channel);
-            new RabbitMQ.Client.BasicProperties().Returns(basicProperties);
             channel.IsOpen.Returns(true);
             channel.BasicConsumeAsync(null, false, null, true, false, null, null)
                 .Returns(async consumeInvocation =>

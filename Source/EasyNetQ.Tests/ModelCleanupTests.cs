@@ -40,7 +40,7 @@ public class ModelCleanupTests : IDisposable
     {
         bus.PubSub.Publish(new TestMessage());
         mockBuilder.Dispose();
-
+        
         mockBuilder.Channels[0].Received().Dispose();
     }
 

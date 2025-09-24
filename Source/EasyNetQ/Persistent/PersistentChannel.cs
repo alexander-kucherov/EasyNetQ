@@ -83,9 +83,12 @@ public class PersistentChannel : IPersistentChannel
         {
             try
             {
-                var channel = initializedChannel ?? await CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                if (initializedChannel == null)
+                {
+                    initializedChannel = await CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                }
                 // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
-                result = await channelAction.InvokeAsync(channel, cancellationToken);
+                result = await channelAction.InvokeAsync(initializedChannel, cancellationToken);
                 return (true, result);
             }
             catch (Exception exception)

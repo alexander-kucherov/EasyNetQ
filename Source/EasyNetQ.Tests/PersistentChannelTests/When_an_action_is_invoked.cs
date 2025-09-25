@@ -16,7 +16,7 @@ public class When_an_action_is_invoked : IDisposable
         channel = Substitute.For<IChannel, IRecoverable>();
 
 #pragma warning disable IDISP004
-        persistentConnection.CreateChannelAsync().Returns(channel);
+        persistentConnection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), default).Returns(channel);
 #pragma warning restore IDISP004
 
         persistentChannel = new PersistentChannel(
@@ -32,7 +32,7 @@ public class When_an_action_is_invoked : IDisposable
     [Fact]
     public async Task Should_open_a_channel()
     {
-        await persistentConnection.Received().CreateChannelAsync();
+        await persistentConnection.Received().CreateChannelAsync(Arg.Any<CreateChannelOptions>(), default);
     }
 
     [Fact]

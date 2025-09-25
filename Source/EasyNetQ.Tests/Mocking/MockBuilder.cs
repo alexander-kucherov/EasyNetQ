@@ -39,7 +39,7 @@ public class MockBuilder : IDisposable
 
         connection.IsOpen.Returns(true);
         connection.Endpoint.Returns(new AmqpTcpEndpoint("localhost"));
-        connection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), Arg.Any<CancellationToken>()).Returns(async _ =>
+        connection.CreateChannelAsync(default, default).ReturnsForAnyArgs(async _ =>
         {
             var channel = channelPool.Pop();
             channels.Add(channel);
@@ -56,8 +56,8 @@ public class MockBuilder : IDisposable
                     consumers.Add(consumer);
                     return string.Empty;
                 });
-            channel.QueueDeclareAsync(null, true, false, false, null)
-               .Returns(async queueDeclareInvocation =>
+            channel.QueueDeclareAsync(null, true, false, false, null, default)
+                .ReturnsForAnyArgs(async queueDeclareInvocation =>
                {
                    var queueName = (string)queueDeclareInvocation[0];
                    return await Task.FromResult(new QueueDeclareOk(queueName, 0, 0));

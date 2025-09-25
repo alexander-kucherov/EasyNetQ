@@ -23,6 +23,10 @@ public class When_auto_subscribing : IDisposable
         mockBuilder = new MockBuilder();
         var services = new ServiceCollection();
         serviceProvider = services.BuildServiceProvider();
+        var autoSubscriber = new AutoSubscriber(mockBuilder.Bus, serviceProvider, "my_app");
+#pragma warning disable IDISP004
+        autoSubscriber.Subscribe([typeof(MyConsumer), typeof(MyGenericAbstractConsumer<>)]);
+#pragma warning disable IDISP004
     }
 
     public virtual void Dispose()

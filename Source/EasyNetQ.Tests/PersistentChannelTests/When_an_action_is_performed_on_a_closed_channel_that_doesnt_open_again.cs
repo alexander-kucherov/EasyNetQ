@@ -19,7 +19,7 @@ public class When_an_action_is_performed_on_a_closed_channel_that_doesnt_open_ag
         );
         var exception = new OperationInterruptedException(shutdownArgs);
 
-        persistentConnection.When(async x => await x.CreateChannelAsync()).Do(_ => throw exception);
+        persistentConnection.When(async x => await x.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), Arg.Any<CancellationToken>())).Do(_ => throw exception);
         persistentChannel = new PersistentChannel(new PersistentChannelOptions(), Substitute.For<ILogger<PersistentChannel>>(), persistentConnection, eventBus);
     }
 

@@ -68,7 +68,7 @@ public class When_an_action_is_performed_and_channel_reopens
             .Do(_ => throw exception);
         var channel = Substitute.For<IChannel, IRecoverable>();
 #pragma warning disable IDISP004
-        persistentConnection.CreateChannelAsync().Returns(_ => brokenChannel, _ => channel);
+        persistentConnection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), default).Returns(_ => brokenChannel, _ => channel);
 #pragma warning restore IDISP004
 
         using var persistentChannel = new PersistentChannel(
@@ -94,7 +94,7 @@ public class When_an_action_is_performed_and_channel_reopens
             .Do(_ => throw exception);
 
 #pragma warning disable IDISP004
-        persistentConnection.CreateChannelAsync().Returns(_ => brokenChannel);
+        persistentConnection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), default).Returns(_ => brokenChannel);
 #pragma warning restore IDISP004
 
         using var persistentChannel = new PersistentChannel(
@@ -118,7 +118,7 @@ public class When_an_action_is_performed_and_channel_reopens
 
         var channel = Substitute.For<IChannel, IRecoverable>();
 #pragma warning disable IDISP004
-        persistentConnection.CreateChannelAsync()
+        persistentConnection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), default)
 #pragma warning restore IDISP004
             .Returns(
                 _ => throw new BrokerUnreachableException(new Exception("Oops")),
@@ -140,7 +140,7 @@ public class When_an_action_is_performed_and_channel_reopens
         using var persistentConnection = Substitute.For<IPersistentConnection>();
         var channel = Substitute.For<IChannel, IRecoverable>();
 #pragma warning disable IDISP004
-        persistentConnection.CreateChannelAsync()
+        persistentConnection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), default)
 #pragma warning restore IDISP004
             .Returns(
                 _ => throw new BrokerUnreachableException(new AuthenticationFailureException("Oops")),

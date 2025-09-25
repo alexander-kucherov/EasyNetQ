@@ -73,39 +73,43 @@ public class PersistentChannel : IPersistentChannel
     }
 
     private async Task<(bool Success, TResult? Result)> TryInvokeChannelActionFastAsync<TResult, TChannelAction>(
-    TChannelAction channelAction,
-    CancellationToken cancellationToken = default
+        TChannelAction channelAction,
+        CancellationToken cancellationToken = default
     ) where TChannelAction : struct, IPersistentChannelAction<TResult>
     {
         TResult? result = default;
 
-        if (mutex.TryAcquire(out var releaser))
+        if (!mutex.TryAcquire(out var releaser))
+            return (false, result);
+
+        try
         {
-            try
+            if (initializedChannel is null)
             {
-                if (initializedChannel == null)
-                {
-                    initializedChannel = await CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-                }
-                // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
-                result = await channelAction.InvokeAsync(initializedChannel, cancellationToken);
-                return (true, result);
+                var created = await CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                initializedChannel = created;
             }
-            catch (Exception exception)
-            {
-                var exceptionVerdict = GetExceptionVerdict(exception);
-                if (exceptionVerdict.CloseChannel)
-                    CloseChannel(cancellationToken);
 
-                if (exceptionVerdict.Rethrow)
-                    throw;
+            var channel = initializedChannel;
 
-                logger.LogError(exception, "Failed to fast invoke channel action, invocation will be retried");
-            }
-            finally
-            {
-                releaser.Dispose();
-            }
+            // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
+            result = await channelAction.InvokeAsync(channel, cancellationToken).ConfigureAwait(false);
+            return (true, result);
+        }
+        catch (Exception exception)
+        {
+            var exceptionVerdict = GetExceptionVerdict(exception);
+            if (exceptionVerdict.CloseChannel)
+                CloseChannel(cancellationToken);
+
+            if (exceptionVerdict.Rethrow)
+                throw;
+
+            logger.LogError(exception, "Failed to fast invoke channel action, invocation will be retried");
+        }
+        finally
+        {
+            releaser.Dispose();
         }
 
         return (false, result);

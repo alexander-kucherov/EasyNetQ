@@ -98,9 +98,10 @@ public class When_using_default_consume_error_strategy
         await mockBuilder.Channels[0].Received().QueueDeclareAsync(
             "CustomEasyNetQErrorQueueName",
             true,
-            false,
-            false,
+            Arg.Is<bool>(false),
+            Arg.Is<bool>(false),
             Arg.Is<IDictionary<string, object>>(x => x.ContainsKey("x-queue-type") && x["x-queue-type"].Equals(QueueType.Quorum)),
+            Arg.Any<bool>(),
             Arg.Any<bool>(),
             Arg.Any<CancellationToken>()
         );

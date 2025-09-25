@@ -46,7 +46,10 @@ public class When_auto_subscribing_async : IDisposable
                 Arg.Is(true),
                 Arg.Is(false),
                 Arg.Is(false),
-                Arg.Is((IDictionary<string, object>)null)
+                Arg.Is((IDictionary<string, object>)null),
+                Arg.Is(false),
+                Arg.Is(false),
+                Arg.Any<CancellationToken>()
             );
 
         await VerifyQueueDeclared(expectedQueueName1);

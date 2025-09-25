@@ -22,7 +22,7 @@ public class When_an_action_is_performed_on_a_closed_channel_that_then_opens
         var exception = new OperationInterruptedException(shutdownArgs);
 
 #pragma warning disable IDISP004
-        persistentConnection.CreateChannelAsync().Returns(
+        persistentConnection.CreateChannelAsync(Arg.Any<CreateChannelOptions>(), default).Returns(
 #pragma warning restore IDISP004
             _ => throw exception, _ => channel, _ => channel
         );

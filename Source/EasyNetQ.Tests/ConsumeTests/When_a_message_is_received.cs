@@ -17,7 +17,7 @@ public class When_a_message_is_received : IDisposable
         mockBuilder.SendReceive.ReceiveAsync("the_queue", x => x
 #pragma warning restore IDISP004
            .Add<MyMessage>(message => deliveredMyMessage = message)
-           .Add<MyOtherMessage>(message => deliveredMyOtherMessage = message));
+           .Add<MyOtherMessage>(message => deliveredMyOtherMessage = message)).GetAwaiter().GetResult();
 
         DeliverMessageAsync("{ Text: \"Hello World :)\" }", "EasyNetQ.Tests.MyMessage, EasyNetQ.Tests").GetAwaiter().GetResult();
         DeliverMessageAsync("{ Text: \"Goodbye Cruel World!\" }", "EasyNetQ.Tests.MyOtherMessage, EasyNetQ.Tests").GetAwaiter().GetResult();

@@ -31,7 +31,7 @@ public class PublishConfirmationListener : IPublishConfirmationListener
     }
 
     /// <inheritdoc />
-    public async Task<IPublishPendingConfirmation> CreatePendingConfirmation(IChannel channel, CancellationToken cancellationToken = default)
+    public async Task<IPublishPendingConfirmation> CreatePendingConfirmationAsync(IChannel channel, CancellationToken cancellationToken = default)
     {
         var sequenceNumber = await channel.GetNextPublishSequenceNumberAsync(cancellationToken);
 

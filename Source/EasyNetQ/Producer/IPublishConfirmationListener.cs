@@ -13,6 +13,6 @@ public interface IPublishConfirmationListener : IDisposable
     /// <param name="channel"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>Pending confirmation to wait</returns>
-    Task<IPublishPendingConfirmation> CreatePendingConfirmation(IChannel channel,
+    Task<IPublishPendingConfirmation> CreatePendingConfirmationAsync(IChannel channel,
         CancellationToken cancellationToken = default);
 }

@@ -57,16 +57,14 @@ public class DefaultConsumerErrorStrategyTests
     {
         using var persistedConnectionMock = Substitute.For<IConsumerConnection>();
         var modelMock = Substitute.For<IChannel>();
-        using var cts = new CancellationTokenSource(Arg.Any<TimeSpan>());
 #pragma warning disable IDISP004
-        persistedConnectionMock.CreateChannelAsync(new CreateChannelOptions(true, true), cts.Token)
+        persistedConnectionMock.CreateChannelAsync(new CreateChannelOptions(false, false), default)
             .Returns(modelMock);
 #pragma warning restore IDISP004
         var consumerErrorStrategy = CreateConsumerErrorStrategy(persistedConnectionMock);
 
         var ackStrategy = await consumerErrorStrategy.HandleErrorAsync(
-            CreateConsumerExecutionContext(CreateOriginalMessage()), new Exception("I just threw!"), cts.Token
-        );
+            CreateConsumerExecutionContext(CreateOriginalMessage()), new Exception("I just threw!"));
 
         Assert.Equal(AckStrategies.AckAsync, ackStrategy);
     }

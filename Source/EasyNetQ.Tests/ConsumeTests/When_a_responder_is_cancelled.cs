@@ -13,7 +13,7 @@ public class When_a_responder_is_cancelled : IDisposable
 
         using var cde = new AsyncCountdownEvent(1);
 
-        using var responder = mockBuilder.Rpc.Respond<RpcRequest, RpcResponse>(
+        var responder = mockBuilder.Rpc.Respond<RpcRequest, RpcResponse>(
             async (_, ct) =>
             {
                 cde.Decrement();
@@ -22,9 +22,12 @@ public class When_a_responder_is_cancelled : IDisposable
             },
             _ => { }
         );
-
-        var deliverTask = DeliverMessageAsync(new RpcRequest());
-        cde.WaitAsync().GetAwaiter().GetResult();
+        Task deliverTask;
+        using (responder)
+        {
+            deliverTask = DeliverMessageAsync(new RpcRequest());
+            cde.WaitAsync().GetAwaiter().GetResult();
+        }
 
         deliverTask.GetAwaiter().GetResult();
     }

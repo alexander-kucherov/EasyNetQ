@@ -150,6 +150,7 @@ public class InternalConsumer : IInternalConsumer
                 try
                 {
                     channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+                    channel.DefaultConsumer = NoopDefaultConsumer.Instance;
                     await channel.BasicQosAsync(0, configuration.PrefetchCount, false, cancellationToken);
                 }
                 catch (Exception exception)
@@ -198,7 +199,7 @@ public class InternalConsumer : IInternalConsumer
                         perQueueConfiguration.ConsumeDelegate
                     );
                     var arguments = perQueueConfiguration.Arguments as IDictionary<string, object?> ?? new Dictionary<string, object?>();
-                    consumer.ConsumerCancelled -= AsyncBasicConsumerOnConsumerCancelled;
+                    consumer.ConsumerCancelled += AsyncBasicConsumerOnConsumerCancelled;
                     var consumerTag = await channel.BasicConsumeAsync(
                         queue.Name, // queue
                         perQueueConfiguration.AutoAck, // noAck

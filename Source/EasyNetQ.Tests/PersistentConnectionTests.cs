@@ -26,7 +26,7 @@ public class PersistentConnectionTests
 
         connection.Status.State.Should().Be(PersistentConnectionState.NotInitialised);
 
-        Assert.Throws<Exception>(() => connection.EnsureConnected());
+        await Assert.ThrowsAsync<Exception>(async () => await connection.EnsureConnectedAsync());
 
         connection.Status.State.Should().Be(PersistentConnectionState.Disconnected);
         await mockBuilder.ConnectionFactory.Received().CreateConnectionAsync(Arg.Any<IList<AmqpTcpEndpoint>>());
@@ -46,7 +46,7 @@ public class PersistentConnectionTests
 
         connection.Status.State.Should().Be(PersistentConnectionState.NotInitialised);
 
-        connection.EnsureConnected();
+        await connection.EnsureConnectedAsync();
 
         connection.Status.State.Should().Be(PersistentConnectionState.Connected);
         await mockBuilder.ConnectionFactory.Received(1).CreateConnectionAsync(Arg.Any<IList<AmqpTcpEndpoint>>());

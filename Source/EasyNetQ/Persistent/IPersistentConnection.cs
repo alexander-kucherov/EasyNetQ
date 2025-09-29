@@ -15,7 +15,7 @@ public interface IPersistentConnection : IDisposable
     /// <summary>
     ///     Establish a connection
     /// </summary>
-    void EnsureConnected();
+    Task EnsureConnectedAsync(CancellationToken token = default);
 
     /// <summary>
     ///     Creates a new channel

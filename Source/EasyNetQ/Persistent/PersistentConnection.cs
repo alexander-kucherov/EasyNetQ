@@ -1,4 +1,5 @@
 using EasyNetQ.Events;
+using EasyNetQ.Internals;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -8,7 +9,7 @@ namespace EasyNetQ.Persistent;
 /// <inheritdoc />
 public class PersistentConnection : IPersistentConnection
 {
-    private readonly object mutex = new();
+    private readonly AsyncLock mutex = new();
     private readonly PersistentConnectionType type;
     private readonly ILogger logger;
     private readonly ConnectionConfiguration configuration;
@@ -41,11 +42,11 @@ public class PersistentConnection : IPersistentConnection
     public PersistentConnectionStatus Status => status;
 
     /// <inheritdoc />
-    public void EnsureConnected()
+    public async Task EnsureConnectedAsync(CancellationToken token = default)
     {
         if (disposed) throw new ObjectDisposedException(nameof(PersistentConnection));
 
-        var connection = InitializeConnection();
+        var connection = await InitializeConnectionAsync(token);
         connection.EnsureIsOpen();
     }
 
@@ -57,7 +58,7 @@ public class PersistentConnection : IPersistentConnection
     {
         if (disposed) throw new ObjectDisposedException(nameof(PersistentConnection));
 
-        var connection = InitializeConnection();
+        var connection = await InitializeConnectionAsync(cancellationToken);
         connection.EnsureIsOpen();
         return await connection.CreateChannelAsync(options, cancellationToken);
     }
@@ -71,21 +72,19 @@ public class PersistentConnection : IPersistentConnection
         disposed = true;
     }
 
-    private IConnection InitializeConnection()
+    private async Task<IConnection> InitializeConnectionAsync(CancellationToken cancellationToken = default)
     {
         var connection = initializedConnection;
         if (connection is not null) return connection;
 
         try
         {
-            // TODO: this needs to be replaced with an async mutex
-            lock (mutex)
+            using (await mutex.AcquireAsync(cancellationToken))
+
             {
                 connection = initializedConnection;
                 if (connection is not null) return connection;
-
-                // TODO: this needs to be replaced with an async mutex
-                connection = initializedConnection = CreateConnectionAsync(CancellationToken.None).GetAwaiter().GetResult();
+                connection = initializedConnection = await CreateConnectionAsync(CancellationToken.None);
             }
         }
         catch (Exception exception)

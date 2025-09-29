@@ -118,11 +118,10 @@ public class RabbitAdvancedBus : IAdvancedBus, IDisposable
     }
 
     /// <inheritdoc />
-    public Task EnsureConnectedAsync(PersistentConnectionType type, CancellationToken cancellationToken = default)
+    public async Task EnsureConnectedAsync(PersistentConnectionType type, CancellationToken cancellationToken = default)
     {
         var connection = GetConnection(type);
-        connection.EnsureConnected();
-        return Task.CompletedTask;
+        await connection.EnsureConnectedAsync(cancellationToken);
     }
 
     #region Consume

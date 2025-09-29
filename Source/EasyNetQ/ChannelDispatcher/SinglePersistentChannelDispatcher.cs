@@ -9,7 +9,7 @@ namespace EasyNetQ.ChannelDispatcher;
 /// <summary>
 ///     Invokes client commands using single channel
 /// </summary>
-public sealed class SinglePersistentChannelDispatcher : IPersistentChannelDispatcher, IDisposable
+public sealed class SinglePersistentChannelDispatcher : IPersistentChannelDispatcher, IAsyncDisposable
 {
     private readonly ConcurrentDictionary<PersistentChannelDispatchOptions, IPersistentChannel> channelPerOptions;
     private readonly Func<PersistentChannelDispatchOptions, IPersistentChannel> createChannelFactory;
@@ -52,6 +52,5 @@ public sealed class SinglePersistentChannelDispatcher : IPersistentChannelDispat
         return channel.InvokeChannelActionAsync<TResult, TChannelAction>(channelAction, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public void Dispose() => channelPerOptions.ClearAndDispose();
+    public async ValueTask DisposeAsync() => await channelPerOptions.ClearAndDisposeAsync();
 }

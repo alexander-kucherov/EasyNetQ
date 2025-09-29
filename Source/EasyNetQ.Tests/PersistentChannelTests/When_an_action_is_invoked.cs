@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 
 namespace EasyNetQ.Tests.PersistentChannelTests;
 
-public class When_an_action_is_invoked : IDisposable
+public class When_an_action_is_invoked : IAsyncLifetime
 {
     private readonly IPersistentChannel persistentChannel;
     private readonly IPersistentConnection persistentConnection;
@@ -25,8 +25,11 @@ public class When_an_action_is_invoked : IDisposable
             persistentConnection,
             Substitute.For<IEventBus>()
         );
+    }
 
-        persistentChannel.InvokeChannelAction(async x => await x.ExchangeDeclareAsync("MyExchange", "direct"));
+    public async Task InitializeAsync()
+    {
+        await persistentChannel.InvokeChannelActionAsync(async x => await x.ExchangeDeclareAsync("MyExchange", "direct"));
     }
 
     [Fact]
@@ -41,8 +44,8 @@ public class When_an_action_is_invoked : IDisposable
         await channel.Received().ExchangeDeclareAsync("MyExchange", "direct");
     }
 
-    public virtual void Dispose()
+    public async Task DisposeAsync()
     {
-        persistentChannel.Dispose();
+        await persistentChannel.DisposeAsync();
     }
 }

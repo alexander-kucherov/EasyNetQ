@@ -1,3 +1,4 @@
+#pragma warning disable IDISP026
 using EasyNetQ.Interception;
 using EasyNetQ.Internals;
 using EasyNetQ.Persistent;
@@ -249,7 +250,7 @@ public readonly struct PullResult<T> : IPullResult
 /// <summary>
 ///     Allows to receive messages by pulling them one by one
 /// </summary>
-public interface IPullingConsumer<TPullResult> : IDisposable where TPullResult : IPullResult
+public interface IPullingConsumer<TPullResult> : IAsyncDisposable where TPullResult : IPullResult
 {
     /// <summary>
     ///     Receives a single message
@@ -395,10 +396,10 @@ public class PullingConsumer : IPullingConsumer<PullResult>
     }
 
     /// <inheritdoc />
-    public virtual void Dispose()
+    public virtual async ValueTask DisposeAsync()
     {
 #pragma warning disable IDISP007 // the injected here is created in the calling method so it should be disposed
-        channel.Dispose();
+        await channel.DisposeAsync();
 #pragma warning restore IDISP007
     }
 
@@ -513,10 +514,10 @@ public class PullingConsumer<T> : IPullingConsumer<PullResult<T>>
     }
 
     /// <inheritdoc />
-    public virtual void Dispose()
+    public virtual async ValueTask DisposeAsync()
     {
 #pragma warning disable IDISP007 // the injected here is created in the calling method so it should be disposed
-        consumer.Dispose();
+        await consumer.DisposeAsync();
 #pragma warning restore IDISP007
     }
 }

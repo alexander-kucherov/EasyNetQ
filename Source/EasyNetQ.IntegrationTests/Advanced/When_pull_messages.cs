@@ -35,7 +35,7 @@ public class When_pull_messages : IDisposable
             Exchange.Default, queue.Name, false, true, MessageProperties.Empty, Array.Empty<byte>(), cts.Token
         );
 
-        using var consumer = bus.Advanced.CreatePullingConsumer(queue, false);
+        await using var consumer = bus.Advanced.CreatePullingConsumer(queue, false);
 
         {
             using var pullResult = await consumer.PullAsync(cts.Token);
@@ -63,7 +63,7 @@ public class When_pull_messages : IDisposable
             Exchange.Default, queue.Name, false, false, MessageProperties.Empty, Array.Empty<byte>(), cts.Token
         );
 
-        using var consumer = bus.Advanced.CreatePullingConsumer(queue, false);
+        await using var consumer = bus.Advanced.CreatePullingConsumer(queue, false);
 
         {
             using var pullResult = await consumer.PullAsync(cts.Token);
@@ -91,7 +91,7 @@ public class When_pull_messages : IDisposable
             Exchange.Default, queue.Name, false, false, MessageProperties.Empty, Array.Empty<byte>(), cts.Token
         );
 
-        using var consumer = bus.Advanced.CreatePullingConsumer(queue, false);
+        await using var consumer = bus.Advanced.CreatePullingConsumer(queue, false);
 
         {
             using var pullResult = await consumer.PullAsync(cts.Token);
@@ -119,7 +119,7 @@ public class When_pull_messages : IDisposable
             Exchange.Default, queue.Name, false, false, MessageProperties.Empty, Array.Empty<byte>(), cts.Token
         );
 
-        using var consumer = bus.Advanced.CreatePullingConsumer(queue);
+        await using var consumer = bus.Advanced.CreatePullingConsumer(queue);
 
         {
             using var pullResult = await consumer.PullAsync(cts.Token);

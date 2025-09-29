@@ -16,7 +16,7 @@ public interface IPersistentChannelAction<TResult>
 /// <summary>
 /// An abstraction on top of channel which manages its persistence and invokes an action on it
 /// </summary>
-public interface IPersistentChannel : IDisposable
+public interface IPersistentChannel : IAsyncDisposable
 {
     /// <summary>
     /// Invoke an action on channel

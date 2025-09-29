@@ -1,3 +1,4 @@
+#pragma warning disable IDISP026
 using EasyNetQ.Events;
 using EasyNetQ.Internals;
 using Microsoft.Extensions.Logging;
@@ -60,7 +61,7 @@ public class PersistentChannel : IPersistentChannel
     }
 
     /// <inheritdoc />
-    public virtual void Dispose()
+    public async ValueTask DisposeAsync()
     {
         if (disposed)
             return;
@@ -68,7 +69,7 @@ public class PersistentChannel : IPersistentChannel
         disposed = true;
         disposeCts.Cancel();
         mutex.Dispose();
-        CloseChannel();
+        await CloseChannelAsync();
         disposeCts.Dispose();
     }
 
@@ -100,7 +101,7 @@ public class PersistentChannel : IPersistentChannel
         {
             var exceptionVerdict = GetExceptionVerdict(exception);
             if (exceptionVerdict.CloseChannel)
-                CloseChannel(cancellationToken);
+                await CloseChannelAsync(cancellationToken);
 
             if (exceptionVerdict.Rethrow)
                 throw;
@@ -142,7 +143,7 @@ public class PersistentChannel : IPersistentChannel
             {
                 var exceptionVerdict = GetExceptionVerdict(exception);
                 if (exceptionVerdict.CloseChannel)
-                    CloseChannel(cancellationToken);
+                    await CloseChannelAsync(cancellationToken);
 
                 if (exceptionVerdict.Rethrow)
                     throw;
@@ -163,13 +164,13 @@ public class PersistentChannel : IPersistentChannel
         return channel;
     }
 
-    private void CloseChannel(CancellationToken cancellationToken = default)
+    private async Task CloseChannelAsync(CancellationToken cancellationToken = default)
     {
         var channel = Interlocked.Exchange(ref initializedChannel, null);
         if (channel == null)
             return;
 
-        channel.CloseAsync(cancellationToken: cancellationToken);
+        await channel.CloseAsync(cancellationToken: cancellationToken);
         DetachChannelEvents(channel);
         channel.Dispose();
     }

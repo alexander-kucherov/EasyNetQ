@@ -6,7 +6,7 @@ using RabbitMQ.Client.Exceptions;
 
 namespace EasyNetQ.Tests.PersistentChannelTests;
 
-public class When_an_action_is_performed_on_a_closed_channel_that_doesnt_open_again : IDisposable
+public class When_an_action_is_performed_on_a_closed_channel_that_doesnt_open_again : IAsyncLifetime
 {
     public When_an_action_is_performed_on_a_closed_channel_that_doesnt_open_again()
     {
@@ -35,8 +35,10 @@ public class When_an_action_is_performed_on_a_closed_channel_that_doesnt_open_ag
         });
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        persistentChannel.Dispose();
+        await persistentChannel.DisposeAsync();
     }
 }

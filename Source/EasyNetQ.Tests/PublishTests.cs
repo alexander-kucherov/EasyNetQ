@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EasyNetQ.Tests;
 
-public class When_publish_is_called : IDisposable
+public class When_publish_is_called : IAsyncLifetime
 {
     private const string correlationId = "abc123";
 
@@ -23,9 +23,11 @@ public class When_publish_is_called : IDisposable
         WaitForMessageToPublish();
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     private void WaitForMessageToPublish()
@@ -77,7 +79,7 @@ public class When_publish_is_called : IDisposable
     }
 }
 
-public class When_publish_with_topic_is_called : IDisposable
+public class When_publish_with_topic_is_called : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
 
@@ -90,9 +92,11 @@ public class When_publish_with_topic_is_called : IDisposable
         WaitForMessageToPublish();
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     private void WaitForMessageToPublish()

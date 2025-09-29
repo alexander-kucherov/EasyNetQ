@@ -6,7 +6,7 @@ using RabbitMQ.Client;
 
 namespace EasyNetQ.Tests.ConsumeTests;
 
-public abstract class ConsumerTestBase : IDisposable
+public abstract class ConsumerTestBase : IAsyncLifetime
 {
     protected const string ConsumerTag = "the_consumer_tag";
     protected const ulong DeliverTag = 10101;
@@ -28,9 +28,11 @@ public abstract class ConsumerTestBase : IDisposable
         AdditionalSetUp();
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        MockBuilder.Dispose();
+        await MockBuilder.DisposeAsync();
     }
 
     protected abstract void AdditionalSetUp();

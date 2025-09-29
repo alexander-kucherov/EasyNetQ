@@ -4,7 +4,7 @@ using EasyNetQ.Topology;
 
 namespace EasyNetQ.Tests.ConsumeTests;
 
-public class When_a_consumer_is_cancelled_by_the_user : IDisposable
+public class When_a_consumer_is_cancelled_by_the_user : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
 
@@ -30,9 +30,11 @@ public class When_a_consumer_is_cancelled_by_the_user : IDisposable
         }
     }
 #pragma warning restore IDISP004
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     [Fact]

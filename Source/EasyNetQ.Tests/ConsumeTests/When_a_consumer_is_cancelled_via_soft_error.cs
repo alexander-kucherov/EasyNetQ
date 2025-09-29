@@ -6,7 +6,7 @@ using RabbitMQ.Client.Events;
 
 namespace EasyNetQ.Tests.ConsumeTests;
 
-public class When_a_consumer_is_cancelled_via_soft_error : IDisposable
+public class When_a_consumer_is_cancelled_via_soft_error : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
 
@@ -27,14 +27,19 @@ public class When_a_consumer_is_cancelled_via_soft_error : IDisposable
         mockBuilder.Consumers[0].Channel.CloseReason.Returns(
             new ShutdownEventArgs(ShutdownInitiator.Application, AmqpErrorCodes.PreconditionFailed, "Oops")
         );
-        mockBuilder.Consumers[0].HandleBasicCancelAsync("consumer_tag").GetAwaiter().GetResult();
-        // Wait for a periodic consumer restart
-        Task.Delay(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
+        
     }
 
-    public virtual void Dispose()
+    public async Task InitializeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.Consumers[0].HandleBasicCancelAsync("consumer_tag");
+        // Wait for a periodic consumer restart
+        await Task.Delay(TimeSpan.FromSeconds(10));
+    }
+
+    public async Task DisposeAsync()
+    {
+        await mockBuilder.DisposeAsync();
     }
 
     [Fact]

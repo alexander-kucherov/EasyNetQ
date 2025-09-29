@@ -3,14 +3,17 @@ using EasyNetQ.Tests.Mocking;
 
 namespace EasyNetQ.Tests.ConsumeTests;
 
-public class When_a_responder_is_cancelled : IDisposable
+public class When_a_responder_is_cancelled : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
 
     public When_a_responder_is_cancelled()
     {
         mockBuilder = new MockBuilder();
+    }
 
+    public async Task InitializeAsync()
+    {
         using var cde = new AsyncCountdownEvent(1);
 
         var responder = mockBuilder.Rpc.Respond<RpcRequest, RpcResponse>(
@@ -26,13 +29,16 @@ public class When_a_responder_is_cancelled : IDisposable
         using (responder)
         {
             deliverTask = DeliverMessageAsync(new RpcRequest());
-            cde.WaitAsync().GetAwaiter().GetResult();
+            await cde.WaitAsync();
         }
 
-        deliverTask.GetAwaiter().GetResult();
+        await deliverTask;
     }
 
-    public virtual void Dispose() => mockBuilder.Dispose();
+    public async Task DisposeAsync()
+    {
+        await mockBuilder.DisposeAsync();
+    }
 
     [Fact]
     public async Task Should_NACK_with_requeue()

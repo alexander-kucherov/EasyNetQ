@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EasyNetQ.Tests.ProducerTests;
 
-public class When_a_request_is_sent_but_an_exception_is_thrown_by_responder : IDisposable
+public class When_a_request_is_sent_but_an_exception_is_thrown_by_responder : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
     private readonly TestRequestMessage requestMessage;
@@ -23,9 +23,11 @@ public class When_a_request_is_sent_but_an_exception_is_thrown_by_responder : ID
         requestMessage = new TestRequestMessage();
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     [Fact]

@@ -3,7 +3,7 @@ using EasyNetQ.Tests.Mocking;
 
 namespace EasyNetQ.Tests.ConsumeTests;
 
-public class When_a_message_is_received : IDisposable
+public class When_a_message_is_received : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
     private MyMessage deliveredMyMessage;
@@ -24,9 +24,11 @@ public class When_a_message_is_received : IDisposable
         DeliverMessageAsync("{ Text: \"Shouldn't get this\" }", "EasyNetQ.Tests.Unknown, EasyNetQ.Tests").GetAwaiter().GetResult();
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     [Fact]

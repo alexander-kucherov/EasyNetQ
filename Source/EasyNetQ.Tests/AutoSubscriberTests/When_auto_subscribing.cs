@@ -4,7 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EasyNetQ.Tests.AutoSubscriberTests;
 
-public class When_auto_subscribing : IDisposable
+#pragma warning disable IDISP006
+public class When_auto_subscribing : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
     private readonly ServiceProvider serviceProvider;
@@ -29,10 +30,14 @@ public class When_auto_subscribing : IDisposable
 #pragma warning disable IDISP004
     }
 
-    public virtual void Dispose()
+
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
-        serviceProvider?.Dispose();
+        await mockBuilder.DisposeAsync();
+        await serviceProvider.DisposeAsync();
     }
 
     [Fact]

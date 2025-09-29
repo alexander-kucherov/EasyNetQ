@@ -6,7 +6,7 @@ using RabbitMQ.Client;
 
 namespace EasyNetQ.Tests.ConsumeTests;
 
-public class When_a_consumer_is_started_on_exclusive_queue_and_connection_is_dropped : IDisposable
+public class When_a_consumer_is_started_on_exclusive_queue_and_connection_is_dropped : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
 
@@ -32,9 +32,11 @@ public class When_a_consumer_is_started_on_exclusive_queue_and_connection_is_dro
         }
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     [Fact]

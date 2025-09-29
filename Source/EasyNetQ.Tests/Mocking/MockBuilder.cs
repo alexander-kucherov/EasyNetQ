@@ -7,7 +7,7 @@ using RabbitMQ.Client;
 namespace EasyNetQ.Tests.Mocking;
 
 [SuppressMessage("IDisposableAnalyzers.Correctness", "IDISP004:Don't ignore created IDisposable")]
-public class MockBuilder : IDisposable
+public sealed class MockBuilder : IAsyncDisposable
 {
     private readonly IServiceProvider serviceProvider;
     private readonly IBus bus;
@@ -111,5 +111,11 @@ public class MockBuilder : IDisposable
 
     public List<string> ConsumerQueueNames { get; } = new();
 
-    public virtual void Dispose() => (serviceProvider as IDisposable)?.Dispose();
+    public async ValueTask DisposeAsync()
+    {
+        if (serviceProvider is IAsyncDisposable sp)
+        {
+            await sp.DisposeAsync();
+        }
+    }
 }

@@ -4,11 +4,13 @@ using RabbitMQ.Client.Events;
 
 namespace EasyNetQ.Tests.ProducerTests;
 
-public class When_a_request_is_sent_but_the_connection_closes_before_a_reply_is_received : IDisposable
+public class When_a_request_is_sent_but_the_connection_closes_before_a_reply_is_received : IAsyncLifetime
 {
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     private readonly MockBuilder mockBuilder = new();

@@ -4,7 +4,7 @@ using EasyNetQ.Topology;
 
 namespace EasyNetQ.Tests.ConsumeTests;
 
-public class When_a_consumer_is_cancelled_by_the_broker : IDisposable
+public class When_a_consumer_is_cancelled_by_the_broker : IAsyncLifetime
 {
     private readonly MockBuilder mockBuilder;
 
@@ -21,13 +21,16 @@ public class When_a_consumer_is_cancelled_by_the_broker : IDisposable
             (_, _, _) => Task.Run(() => { }),
             c => c.WithConsumerTag("consumer_tag")
         );
+    }
 
+    public async Task InitializeAsync()
+    {
         using var are = new AutoResetEvent(false);
 #pragma warning disable IDISP004
         mockBuilder.EventBus.Subscribe((in ConsumerChannelDisposedEvent _) => are.Set());
 #pragma warning restore IDISP004
 
-        mockBuilder.Consumers[0].HandleBasicCancelAsync("consumer_tag").GetAwaiter().GetResult();
+        await mockBuilder.Consumers[0].HandleBasicCancelAsync("consumer_tag");
 
         if (!are.WaitOne(5000))
         {
@@ -35,9 +38,9 @@ public class When_a_consumer_is_cancelled_by_the_broker : IDisposable
         }
     }
 
-    public virtual void Dispose()
+    public async Task DisposeAsync()
     {
-        mockBuilder.Dispose();
+        await mockBuilder.DisposeAsync();
     }
 
     [Fact]

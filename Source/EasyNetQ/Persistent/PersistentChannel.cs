@@ -178,15 +178,15 @@ public class PersistentChannel : IPersistentChannel
     {
         if (options.PublisherConfirms)
         {
-            channel.BasicAcksAsync += OnAck;
-            channel.BasicNacksAsync += OnNack;
+            channel.BasicAcksAsync += OnAckAsync;
+            channel.BasicNacksAsync += OnNackAsync;
         }
 
-        channel.BasicReturnAsync += OnReturn;
-        channel.ChannelShutdownAsync += OnChannelShutdown;
+        channel.BasicReturnAsync += OnReturnAsync;
+        channel.ChannelShutdownAsync += OnChannelShutdownAsync;
 
         if (channel is IRecoverable recoverable)
-            recoverable.RecoveryAsync += OnChannelRecovered;
+            recoverable.RecoveryAsync += OnChannelRecoveredAsync;
         else
             throw new NotSupportedException("Non-recoverable channel is not supported");
     }
@@ -194,31 +194,31 @@ public class PersistentChannel : IPersistentChannel
     private void DetachChannelEvents(IChannel channel)
     {
         if (channel is IRecoverable recoverable)
-            recoverable.RecoveryAsync -= OnChannelRecovered;
+            recoverable.RecoveryAsync -= OnChannelRecoveredAsync;
 
-        channel.ChannelShutdownAsync -= OnChannelShutdown;
-        channel.BasicReturnAsync -= OnReturn;
+        channel.ChannelShutdownAsync -= OnChannelShutdownAsync;
+        channel.BasicReturnAsync -= OnReturnAsync;
 
         if (!options.PublisherConfirms)
             return;
 
-        channel.BasicNacksAsync -= OnNack;
-        channel.BasicAcksAsync -= OnAck;
+        channel.BasicNacksAsync -= OnNackAsync;
+        channel.BasicAcksAsync -= OnAckAsync;
     }
 
-    private Task OnChannelRecovered(object? sender, AsyncEventArgs e)
+    private Task OnChannelRecoveredAsync(object? sender, AsyncEventArgs e)
     {
         eventBus.Publish(new ChannelRecoveredEvent((IChannel)sender!));
         return Task.CompletedTask;
     }
 
-    private Task OnChannelShutdown(object? sender, ShutdownEventArgs e)
+    private Task OnChannelShutdownAsync(object? sender, ShutdownEventArgs e)
     {
         eventBus.Publish(new ChannelShutdownEvent((IChannel)sender!));
         return Task.CompletedTask;
     }
 
-    private Task OnReturn(object? sender, BasicReturnEventArgs args)
+    private Task OnReturnAsync(object? sender, BasicReturnEventArgs args)
     {
         var messageProperties = new MessageProperties(args.BasicProperties);
         var messageReturnedInfo = new MessageReturnedInfo(args.Exchange, args.RoutingKey, args.ReplyText);
@@ -232,13 +232,13 @@ public class PersistentChannel : IPersistentChannel
         return Task.CompletedTask;
     }
 
-    private Task OnAck(object? sender, BasicAckEventArgs args)
+    private Task OnAckAsync(object? sender, BasicAckEventArgs args)
     {
         eventBus.Publish(MessageConfirmationEvent.Ack((IChannel)sender!, args.DeliveryTag, args.Multiple));
         return Task.CompletedTask;
     }
 
-    private Task OnNack(object? sender, BasicNackEventArgs args)
+    private Task OnNackAsync(object? sender, BasicNackEventArgs args)
     {
         eventBus.Publish(MessageConfirmationEvent.Nack((IChannel)sender!, args.DeliveryTag, args.Multiple));
         return Task.CompletedTask;

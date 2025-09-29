@@ -314,12 +314,12 @@ public class InternalConsumer : IInternalConsumer
             if (sender is AsyncBasicConsumer consumer && consumers.Remove(consumer.Queue.Name))
             {
                 consumer.ConsumerCancelledAsync -= AsyncBasicConsumerOnConsumerCancelled;
-                cancelled = consumer.Queue;
-                active = consumers.Select(x => x.Value.Queue).ToList();
-
 #pragma warning disable IDISP007
                 await consumer.DisposeAsync();
 #pragma warning restore IDISP007
+                cancelled = consumer.Queue;
+                active = consumers.Select(x => x.Value.Queue).ToList();
+
                 if (IsChannelClosedWithSoftError(channel)) return;
             }
             else

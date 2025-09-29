@@ -32,8 +32,9 @@ public class When_consume_is_called_with_auto_ack : ConsumerTestBase
            Arg.Is(ConsumerTag),
            Arg.Is(true),
            Arg.Is(false),
-           Arg.Is((IDictionary<string, object>)null),
-           Arg.Is(MockBuilder.Consumers[0])
+           Arg.Any<IDictionary<string, object>>(),
+           Arg.Is(MockBuilder.Consumers[0]),
+           default
        );
     }
 }

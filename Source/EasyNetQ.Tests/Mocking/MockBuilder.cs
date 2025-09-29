@@ -45,7 +45,7 @@ public class MockBuilder : IDisposable
             channels.Add(channel);
             channel.IsOpen.Returns(true);
             channel.BasicConsumeAsync(Arg.Any<string>(), false, Arg.Any<string>(), true, false, Arg.Any<IDictionary<string, object>>(), Arg.Any<IAsyncBasicConsumer>(), default)
-                .Returns(async consumeInvocation =>
+                .ReturnsForAnyArgs(async consumeInvocation =>
                 {
                     var queueName = (string)consumeInvocation[0];
                     var consumerTag = (string)consumeInvocation[2];

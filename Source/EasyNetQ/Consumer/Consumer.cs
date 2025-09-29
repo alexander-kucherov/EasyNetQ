@@ -161,7 +161,7 @@ public class Consumer : IConsumer
     }
 
     /// <inheritdoc />
-    public virtual async void Dispose()
+    public virtual void Dispose()
     {
         if (disposed) return;
 
@@ -173,7 +173,7 @@ public class Consumer : IConsumer
         foreach (var disposable in disposables)
             disposable.Dispose();
 
-        await consumerToDispose.DisposeAsync();
+        consumerToDispose.DisposeAsync().GetAwaiter().GetResult();
 
         eventBus.Publish(new StoppedConsumingEvent(this));
     }
@@ -189,7 +189,7 @@ public class Consumer : IConsumer
     {
         if (@event.Type != PersistentConnectionType.Consumer) return;
 
-        consumer?.StopConsumingAsync();
+        consumer?.StopConsumingAsync().GetAwaiter().GetResult();
     }
 
     private void OnConnectionRecovered(in ConnectionRecoveredEvent @event)

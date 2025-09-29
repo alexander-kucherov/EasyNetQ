@@ -136,7 +136,7 @@ public class InternalConsumer : IInternalConsumer
 
                 foreach (var consumer in consumers.Values)
                 {
-                    consumer.ConsumerCancelled -= AsyncBasicConsumerOnConsumerCancelled;
+                    consumer.ConsumerCancelledAsync -= AsyncBasicConsumerOnConsumerCancelled;
                     await consumer.DisposeAsync();
                 }
 
@@ -199,7 +199,7 @@ public class InternalConsumer : IInternalConsumer
                         perQueueConfiguration.ConsumeDelegate
                     );
                     var arguments = perQueueConfiguration.Arguments as IDictionary<string, object?> ?? new Dictionary<string, object?>();
-                    consumer.ConsumerCancelled += AsyncBasicConsumerOnConsumerCancelled;
+                    consumer.ConsumerCancelledAsync += AsyncBasicConsumerOnConsumerCancelled;
                     var consumerTag = await channel.BasicConsumeAsync(
                         queue.Name, // queue
                         perQueueConfiguration.AutoAck, // noAck
@@ -246,7 +246,7 @@ public class InternalConsumer : IInternalConsumer
         {
             foreach (var consumer in consumers.Values)
             {
-                consumer.ConsumerCancelled -= AsyncBasicConsumerOnConsumerCancelled;
+                consumer.ConsumerCancelledAsync -= AsyncBasicConsumerOnConsumerCancelled;
                 foreach (var consumerTag in consumer.ConsumerTags)
                 {
                     try
@@ -279,7 +279,7 @@ public class InternalConsumer : IInternalConsumer
         {
             foreach (var consumer in consumers.Values)
             {
-                consumer.ConsumerCancelled -= AsyncBasicConsumerOnConsumerCancelled;
+                consumer.ConsumerCancelledAsync -= AsyncBasicConsumerOnConsumerCancelled;
                 foreach (var consumerTag in consumer.ConsumerTags)
                 {
                     try
@@ -300,9 +300,9 @@ public class InternalConsumer : IInternalConsumer
         }
     }
 
-    private void AsyncBasicConsumerOnConsumerCancelled(object? sender, ConsumerEventArgs @event)
+    private async Task AsyncBasicConsumerOnConsumerCancelled(object? sender, ConsumerEventArgs @event)
     {
-        _ = HandleConsumerCancelledAsync(sender, @event);
+        await HandleConsumerCancelledAsync(sender, @event);
     }
 
     private async Task HandleConsumerCancelledAsync(object? sender, ConsumerEventArgs @event)
@@ -313,7 +313,7 @@ public class InternalConsumer : IInternalConsumer
         {
             if (sender is AsyncBasicConsumer consumer && consumers.Remove(consumer.Queue.Name))
             {
-                consumer.ConsumerCancelled -= AsyncBasicConsumerOnConsumerCancelled;
+                consumer.ConsumerCancelledAsync -= AsyncBasicConsumerOnConsumerCancelled;
                 cancelled = consumer.Queue;
                 active = consumers.Select(x => x.Value.Queue).ToList();
 

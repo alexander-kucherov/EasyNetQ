@@ -39,7 +39,7 @@ internal sealed class AsyncBasicConsumer : AsyncDefaultBasicConsumer, IAsyncDisp
 
     public Queue Queue => queue;
 
-    public event EventHandler<ConsumerEventArgs>? ConsumerCancelled;
+    public event AsyncEventHandler<ConsumerEventArgs>? ConsumerCancelledAsync;
 
     /// <inheritdoc />
     protected override async Task OnCancelAsync(string[] consumerTags, CancellationToken cancellationToken = default)
@@ -54,7 +54,10 @@ internal sealed class AsyncBasicConsumer : AsyncDefaultBasicConsumer, IAsyncDisp
             );
         }
 
-        ConsumerCancelled?.Invoke(this, new ConsumerEventArgs(consumerTags));
+        if (ConsumerCancelledAsync != null)
+        {
+            await ConsumerCancelledAsync.Invoke(this, new ConsumerEventArgs(consumerTags));
+        }
     }
 
     public override async Task HandleBasicDeliverAsync(

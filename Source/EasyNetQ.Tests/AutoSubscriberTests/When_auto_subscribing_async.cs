@@ -65,12 +65,14 @@ public class When_auto_subscribing_async : IDisposable
                 Arg.Is(queueName),
                 Arg.Any<string>(),
                 Arg.Is(topicName),
-                Arg.Is((IDictionary<string, object>)null)
+                Arg.Is((IDictionary<string, object>)null),
+                default,
+                Arg.Any<CancellationToken>()
             );
 
         await ConsumerStarted(1, expectedQueueName1, "#");
-        await ConsumerStarted(2, expectedQueueName2, "#");
-        await ConsumerStarted(3, expectedQueueName3, "Important");
+        await ConsumerStarted(1, expectedQueueName2, "#");
+        await ConsumerStarted(1, expectedQueueName3, "Important");
     }
 
     [Fact]

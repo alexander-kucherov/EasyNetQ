@@ -47,7 +47,10 @@ public class When_auto_subscribing_with_explicit_implementation : IDisposable
                 Arg.Is(true),
                 Arg.Is(false),
                 Arg.Is(false),
-                Arg.Is((IDictionary<string, object>)null)
+                Arg.Is((IDictionary<string, object>)null),
+                default,
+                default,
+                Arg.Any<CancellationToken>()
             );
         };
 
@@ -64,7 +67,9 @@ public class When_auto_subscribing_with_explicit_implementation : IDisposable
                 Arg.Is(queueName),
                 Arg.Any<string>(),
                 Arg.Is(topicName),
-                Arg.Is((IDictionary<string, object>)null)
+                Arg.Is((IDictionary<string, object>)null),
+                default,
+                Arg.Any<CancellationToken>()
             );
 
         await assertConsumerStarted(1, expectedQueueName1, "#");

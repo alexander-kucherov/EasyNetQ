@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EasyNetQ.IntegrationTests.PubSub;
 
 [Collection("RabbitMQ")]
-public class When_publish_and_subscribe_with_default_options : IDisposable
+public class When_publish_and_subscribe_with_default_options : IDisposable, IAsyncLifetime
 {
     private readonly RabbitMQFixture rmqFixture;
 
@@ -21,9 +21,16 @@ public class When_publish_and_subscribe_with_default_options : IDisposable
         bus = serviceProvider.GetRequiredService<IBus>();
     }
 
+    public Task InitializeAsync() => Task.CompletedTask;
+
     public virtual void Dispose()
     {
         serviceProvider?.Dispose();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await serviceProvider.DisposeAsync();
     }
 
     private const int MessagesCount = 10;

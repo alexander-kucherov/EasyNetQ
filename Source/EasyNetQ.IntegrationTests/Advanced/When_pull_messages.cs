@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EasyNetQ.IntegrationTests.Advanced;
 
 [Collection("RabbitMQ")]
-public class When_pull_messages : IDisposable
+public class When_pull_messages : IDisposable, IAsyncLifetime
 {
     private readonly ServiceProvider serviceProvider;
     private readonly IBus bus;
@@ -17,10 +17,16 @@ public class When_pull_messages : IDisposable
         serviceProvider = serviceCollection.BuildServiceProvider();
         bus = serviceProvider.GetRequiredService<IBus>();
     }
+    public Task InitializeAsync() => Task.CompletedTask;
 
     public virtual void Dispose()
     {
         serviceProvider?.Dispose();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await serviceProvider.DisposeAsync();
     }
 
     [Fact]

@@ -4,8 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EasyNetQ.IntegrationTests.Advanced;
 
+#pragma warning disable IDISP006
 [Collection("RabbitMQ")]
-public class When_consumer_callback_does_not_respect_ct : IDisposable
+public class When_consumer_callback_does_not_respect_ct : IAsyncLifetime
 {
     private readonly ServiceProvider serviceProvider;
     private readonly IBus bus;
@@ -44,8 +45,10 @@ public class When_consumer_callback_does_not_respect_ct : IDisposable
             await allMessagesReceived.WaitAsync(cts.Token);
     }
 
-    public virtual void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        serviceProvider?.Dispose();
+        await serviceProvider.DisposeAsync();
     }
 }

@@ -6,7 +6,7 @@ namespace EasyNetQ;
 /// <inheritdoc />
 public delegate void TEventHandler<TEvent>(in TEvent @event) where TEvent : struct;
 /// <inheritdoc />
-public delegate ValueTask TEventHandlerAsync<TEvent>(in TEvent @event, CancellationToken cancellationToken) where TEvent : struct;
+public delegate ValueTask TEventHandlerAsync<TEvent>(TEvent @event, CancellationToken cancellationToken) where TEvent : struct;
 
 /// <summary>
 ///     An internal pub-sub bus to distribute events within EasyNetQ
@@ -26,7 +26,7 @@ public interface IEventBus
     /// <param name="event">The event</param>
     /// <param name="cancellationToken"></param>
     /// <typeparam name="TEvent">The event type</typeparam>
-    ValueTask PublishAsync<TEvent>(in TEvent @event, CancellationToken cancellationToken) where TEvent : struct;
+    ValueTask PublishAsync<TEvent>(in TEvent @event, CancellationToken cancellationToken = default) where TEvent : struct;
 
     /// <summary>
     ///     Subscribes to the event type
@@ -117,7 +117,7 @@ public sealed class EventBus : IEventBus
 
     private static TEventHandlerAsync<TEvent> WrapSync<TEvent>(TEventHandler<TEvent> sync) where TEvent : struct
     {
-        return (in TEvent e, CancellationToken _) =>
+        return (e, _) =>
         {
             sync(in e);
             return default;
@@ -163,7 +163,7 @@ public sealed class EventBus : IEventBus
             {
                 try
                 {
-                    await h(in @event, cancellationToken).ConfigureAwait(false);
+                    await h(@event, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

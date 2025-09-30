@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace EasyNetQ.Consumer;
 
 /// <inheritdoc />
-public interface IConsumerFactory : IDisposable
+public interface IConsumerFactory : IAsyncDisposable
 {
     /// <summary>
     ///     Creates a consumer based on the configuration
@@ -16,6 +16,7 @@ public interface IConsumerFactory : IDisposable
     IConsumer CreateConsumer(ConsumerConfiguration configuration);
 }
 
+#pragma warning disable IDISP026
 /// <inheritdoc />
 public class ConsumerFactory : IConsumerFactory
 {
@@ -52,9 +53,9 @@ public class ConsumerFactory : IConsumerFactory
     }
 
     /// <inheritdoc />
-    public virtual void Dispose()
+    public virtual async ValueTask DisposeAsync()
     {
         unsubscribeFromStoppedConsumerEvent.Dispose();
-        consumers.ClearAndDispose();
+        await consumers.ClearAndDisposeAsync();
     }
 }

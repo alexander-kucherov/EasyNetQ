@@ -70,6 +70,7 @@ public class PersistentConnection : IPersistentConnection
 
         DisposeConnection();
         disposed = true;
+        mutex.Dispose();
     }
 
     private async Task<IConnection> InitializeConnectionAsync(CancellationToken cancellationToken = default)
@@ -100,7 +101,7 @@ public class PersistentConnection : IPersistentConnection
             connection.Endpoint.HostName,
             connection.Endpoint.Port
         );
-        eventBus.Publish(new ConnectionCreatedEvent(type, connection.Endpoint));
+        await eventBus.PublishAsync(new ConnectionCreatedEvent(type, connection.Endpoint), cancellationToken);
         return connection;
     }
 
@@ -140,7 +141,7 @@ public class PersistentConnection : IPersistentConnection
         status = status.ToUnknown();
     }
 
-    private Task OnConnectionRecovered(object sender, AsyncEventArgs e)
+    private async Task OnConnectionRecovered(object sender, AsyncEventArgs e)
     {
         status = status.ToConnected();
         var connection = (IConnection)sender!;
@@ -150,11 +151,10 @@ public class PersistentConnection : IPersistentConnection
             connection.Endpoint.HostName,
             connection.Endpoint.Port
         );
-        eventBus.Publish(new ConnectionRecoveredEvent(type, connection.Endpoint));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(new ConnectionRecoveredEvent(type, connection.Endpoint));
     }
 
-    private Task OnConnectionShutdown(object? sender, ShutdownEventArgs e)
+    private async Task OnConnectionShutdown(object? sender, ShutdownEventArgs e)
     {
         status = status.ToDisconnected(e.ToString());
         var connection = (IConnection)sender!;
@@ -166,22 +166,19 @@ public class PersistentConnection : IPersistentConnection
             connection.Endpoint.Port,
             e.ReplyText
         );
-        eventBus.Publish(new ConnectionDisconnectedEvent(type, connection.Endpoint, e.ReplyText));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(new ConnectionDisconnectedEvent(type, connection.Endpoint, e.ReplyText));
     }
 
-    private Task OnConnectionBlocked(object? sender, ConnectionBlockedEventArgs e)
+    private async Task OnConnectionBlocked(object? sender, ConnectionBlockedEventArgs e)
     {
         logger.LogInformation("Connection {type} blocked with reason {reason}", type, e.Reason);
-        eventBus.Publish(new ConnectionBlockedEvent(type, e.Reason ?? "Unknown reason"));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(new ConnectionBlockedEvent(type, e.Reason ?? "Unknown reason"));
     }
 
-    private Task OnConnectionUnblocked(object? sender, AsyncEventArgs e)
+    private async Task OnConnectionUnblocked(object? sender, AsyncEventArgs e)
     {
         logger.LogInformation("Connection {type} unblocked", type);
-        eventBus.Publish(new ConnectionUnblockedEvent(type));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(new ConnectionUnblockedEvent(type));
     }
 
     private static SslOption NewSslForHost(SslOption option, string host) =>

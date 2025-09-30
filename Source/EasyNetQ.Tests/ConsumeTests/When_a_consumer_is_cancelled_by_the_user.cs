@@ -16,7 +16,7 @@ public class When_a_consumer_is_cancelled_by_the_user : IAsyncLifetime
         var queue = new Queue("my_queue", false);
 
         var cancelSubscription = mockBuilder.Bus.Advanced
-            .Consume(queue, async (_, _, _) => await Task.Run(() => { }));
+            .ConsumeAsync(queue, async (_, _, _) => await Task.Run(() => { }));
 
         using var are = new AutoResetEvent(false);
 

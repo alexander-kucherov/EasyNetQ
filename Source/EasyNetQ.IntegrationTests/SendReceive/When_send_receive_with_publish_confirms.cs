@@ -40,7 +40,7 @@ public class When_send_receive_with_publish_confirms : IDisposable, IAsyncLifeti
         var queue = Guid.NewGuid().ToString();
         var messagesSink = new MessagesSink(MessagesCount);
         var messages = MessagesFactories.Create(MessagesCount);
-        using (
+        await using (
             await bus.SendReceive.ReceiveAsync(queue, x => x.Add<Message>(messagesSink.Receive), cts.Token)
         )
         {

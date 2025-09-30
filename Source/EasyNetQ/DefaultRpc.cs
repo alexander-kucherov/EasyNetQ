@@ -120,6 +120,7 @@ public class DefaultRpc : IRpc, IDisposable
         eventSubscription.Dispose();
         foreach (var responseSubscription in responseSubscriptions.Values)
             responseSubscription.Unsubscribe();
+        responseSubscriptionsLock.Dispose();
     }
 
     private void OnConnectionRecovered(in ConnectionRecoveredEvent @event)
@@ -209,7 +210,7 @@ public class DefaultRpc : IRpc, IDisposable
             await advancedBus.BindAsync(exchange, queue, queue.Name, cancellationToken).ConfigureAwait(false);
         }
 
-        var subscription = advancedBus.Consume<TResponse>(
+        var subscription = advancedBus.ConsumeAsync<TResponse>(
             queue,
             (message, _) =>
             {
@@ -287,7 +288,7 @@ public class DefaultRpc : IRpc, IDisposable
 
         await advancedBus.BindAsync(exchange, queue, routingKey, cancellationToken).ConfigureAwait(false);
 
-        return advancedBus.Consume<TRequest>(
+        return advancedBus.ConsumeAsync<TRequest>(
             queue,
             (message, _, cancellation) => RespondToMessageAsync(responder, message, cancellation),
             c => c.WithPrefetchCount(responderConfiguration.PrefetchCount)

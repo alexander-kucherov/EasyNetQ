@@ -88,12 +88,12 @@ internal sealed class AsyncBasicConsumer : AsyncDefaultBasicConsumer, IAsyncDisp
             consumerTag, deliveryTag, redelivered, exchange, routingKey, queue.Name
         );
         var messageProperties = new MessageProperties(properties);
-        eventBus.Publish(new DeliveredMessageEvent(messageReceivedInfo, messageProperties, messageBody));
+        await eventBus.PublishAsync(new DeliveredMessageEvent(messageReceivedInfo, messageProperties, messageBody), cancellationToken);
         var ackStrategy = await consumeDelegate(new ConsumeContext(messageReceivedInfo, messageProperties, messageBody, serviceResolver, cts.Token)).ConfigureAwait(false);
         if (!autoAck)
         {
             var ackResult = await AckAsync(ackStrategy, messageReceivedInfo, cancellationToken);
-            eventBus.Publish(new AckEvent(messageReceivedInfo, messageProperties, messageBody, ackResult));
+            await eventBus.PublishAsync(new AckEvent(messageReceivedInfo, messageProperties, messageBody, ackResult), cancellationToken);
         }
     }
 
@@ -107,7 +107,7 @@ internal sealed class AsyncBasicConsumer : AsyncDefaultBasicConsumer, IAsyncDisp
         disposed = true;
         cts.Cancel();
         cts.Dispose();
-        eventBus.Publish(new ConsumerChannelDisposedEvent(ConsumerTags));
+        await eventBus.PublishAsync(new ConsumerChannelDisposedEvent(ConsumerTags));
     }
 #pragma warning restore CS1998
 

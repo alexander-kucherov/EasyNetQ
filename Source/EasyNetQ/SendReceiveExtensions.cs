@@ -16,7 +16,7 @@ public static class SendReceiveExtensions
     /// <param name="onMessage">The asynchronous function that handles the message</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static Task<IDisposable> ReceiveAsync<T>(
+    public static Task<IAsyncDisposable> ReceiveAsync<T>(
         this ISendReceive sendReceive,
         string queue,
         Func<T, CancellationToken, Task> onMessage,
@@ -33,7 +33,7 @@ public static class SendReceiveExtensions
     /// <param name="configure">Action to configure consumer with</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static Task<IDisposable> ReceiveAsync<T>(
+    public static Task<IAsyncDisposable> ReceiveAsync<T>(
         this ISendReceive sendReceive,
         string queue,
         Func<T, CancellationToken, Task> onMessage,
@@ -104,7 +104,7 @@ public static class SendReceiveExtensions
     /// <param name="onMessage">The synchronous function that handles the message</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static Task<IDisposable> ReceiveAsync<T>(
+    public static Task<IAsyncDisposable> ReceiveAsync<T>(
         this ISendReceive sendReceive,
         string queue,
         Action<T> onMessage,
@@ -129,7 +129,7 @@ public static class SendReceiveExtensions
     /// <param name="configure">Action to configure consumer with</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static Task<IDisposable> ReceiveAsync<T>(
+    public static Task<IAsyncDisposable> ReceiveAsync<T>(
         this ISendReceive sendReceive,
         string queue,
         Action<T> onMessage,
@@ -156,7 +156,7 @@ public static class SendReceiveExtensions
     /// <param name="onMessage">The asynchronous function that handles the message</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static Task<IDisposable> ReceiveAsync<T>(
+    public static Task<IAsyncDisposable> ReceiveAsync<T>(
         this ISendReceive sendReceive,
         string queue,
         Func<T, Task> onMessage,
@@ -181,7 +181,7 @@ public static class SendReceiveExtensions
     /// <param name="configure">Action to configure consumer with</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static Task<IDisposable> ReceiveAsync<T>(
+    public static Task<IAsyncDisposable> ReceiveAsync<T>(
         this ISendReceive sendReceive,
         string queue,
         Func<T, Task> onMessage,
@@ -205,7 +205,7 @@ public static class SendReceiveExtensions
     /// <param name="addHandlers">A function to add handlers</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static Task<IDisposable> ReceiveAsync(
+    public static Task<IAsyncDisposable> ReceiveAsync(
         this ISendReceive sendReceive,
         string queue,
         Action<IReceiveRegistration> addHandlers,
@@ -229,7 +229,7 @@ public static class SendReceiveExtensions
     /// <param name="onMessage">The synchronous function that handles the message</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static IDisposable Receive<T>(
+    public static IAsyncDisposable Receive<T>(
         this ISendReceive sendReceive,
         string queue,
         Action<T> onMessage,
@@ -249,7 +249,7 @@ public static class SendReceiveExtensions
     /// <param name="configure">Action to configure consumer with</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static IDisposable Receive<T>(
+    public static IAsyncDisposable Receive<T>(
         this ISendReceive sendReceive,
         string queue,
         Action<T> onMessage,
@@ -276,7 +276,7 @@ public static class SendReceiveExtensions
     /// <param name="onMessage">The asynchronous function that handles the message</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static IDisposable Receive<T>(
+    public static IAsyncDisposable Receive<T>(
         this ISendReceive sendReceive,
         string queue,
         Func<T, Task> onMessage,
@@ -301,7 +301,7 @@ public static class SendReceiveExtensions
     /// <param name="configure">Action to configure consumer with</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static IDisposable Receive<T>(
+    public static IAsyncDisposable Receive<T>(
         this ISendReceive sendReceive,
         string queue,
         Func<T, CancellationToken, Task> onMessage,
@@ -325,7 +325,7 @@ public static class SendReceiveExtensions
     /// <param name="addHandlers">A function to add handlers</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static IDisposable Receive(
+    public static IAsyncDisposable Receive(
         this ISendReceive sendReceive,
         string queue,
         Action<IReceiveRegistration> addHandlers,
@@ -349,7 +349,7 @@ public static class SendReceiveExtensions
     /// <param name="configure">Action to configure consumer with</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Consumer cancellation. Call Dispose to stop consuming</returns>
-    public static IDisposable Receive(
+    public static IAsyncDisposable Receive(
         this ISendReceive sendReceive,
         string queue,
         Action<IReceiveRegistration> addHandlers,

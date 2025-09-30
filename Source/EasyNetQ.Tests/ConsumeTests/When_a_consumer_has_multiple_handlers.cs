@@ -24,7 +24,7 @@ public class When_a_consumer_has_multiple_handlers : IAsyncLifetime
         using var countdownEvent = new CountdownEvent(3);
 
 #pragma warning disable IDISP004
-        mockBuilder.Bus.Advanced.Consume(
+        await mockBuilder.Bus.Advanced.ConsumeAsync(
 #pragma warning restore IDISP004
             queue,
             x => x.Add<MyMessage>((message, _) =>
@@ -41,8 +41,7 @@ public class When_a_consumer_has_multiple_handlers : IAsyncLifetime
                 {
                     animalResult = message.Body;
                     countdownEvent.Signal();
-                })
-        );
+                }));
 
         await DeliverAsync(new MyMessage { Text = "Hello Polymorphs!" });
         await DeliverAsync(new MyOtherMessage { Text = "Hello Isomorphs!" });

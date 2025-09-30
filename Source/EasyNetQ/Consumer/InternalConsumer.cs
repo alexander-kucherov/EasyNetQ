@@ -298,6 +298,7 @@ public class InternalConsumer : IInternalConsumer
             consumers.Clear();
             channel?.Dispose();
         }
+        mutex.Dispose();
     }
 
     private async Task AsyncBasicConsumerOnConsumerCancelled(object? sender, ConsumerEventArgs @event)

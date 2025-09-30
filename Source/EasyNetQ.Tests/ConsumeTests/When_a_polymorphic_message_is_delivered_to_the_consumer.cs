@@ -18,7 +18,7 @@ public class When_a_polymorphic_message_is_delivered_to_the_consumer : IAsyncLif
         var queue = new Queue("test_queue", false);
 
 #pragma warning disable IDISP004
-        mockBuilder.Bus.Advanced.Consume<ITestMessageInterface>(queue, (message, _) => receivedMessage = message.Body);
+        mockBuilder.Bus.Advanced.ConsumeAsync<ITestMessageInterface>(queue, (message, _) => receivedMessage = message.Body);
 #pragma warning restore IDISP004
 
         var publishedMessage = new Implementation { Text = "Hello Polymorphs!" };

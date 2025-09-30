@@ -4,10 +4,10 @@ namespace EasyNetQ.Tests.ConsumeTests;
 
 public class When_consume_is_called : ConsumerTestBase
 {
-    protected override void AdditionalSetUp()
+    protected override async Task InitializeAsyncCore()
     {
 #pragma warning disable IDISP004
-        StartConsumer((_, _, _, _) => AckStrategies.AckAsync);
+        await StartConsumerAsync((_, _, _, _) => AckStrategies.AckAsync);
 #pragma warning restore IDISP004
     }
 

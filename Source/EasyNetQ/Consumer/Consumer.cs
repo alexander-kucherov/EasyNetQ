@@ -9,7 +9,7 @@ namespace EasyNetQ.Consumer;
 /// <summary>
 ///     Represent an abstract consumer
 /// </summary>
-public interface IConsumer : IDisposable
+public interface IConsumer : IAsyncDisposable
 {
     /// <summary>
     ///     Unique consumer id
@@ -100,6 +100,7 @@ public class ConsumerConfiguration
     public IReadOnlyDictionary<Queue, PerQueueConsumerConfiguration> PerQueueConfigurations { get; }
 }
 
+#pragma warning disable IDISP026
 /// <inheritdoc />
 public class Consumer : IConsumer
 {
@@ -109,7 +110,7 @@ public class Consumer : IConsumer
     private readonly IEventBus eventBus;
     private readonly IInternalConsumerFactory internalConsumerFactory;
     private readonly IDisposable[] disposables;
-    private readonly object mutex = new();
+    private readonly AsyncLock mutex = new();
 
     private volatile IInternalConsumer? consumer;
     private volatile bool disposed;
@@ -129,9 +130,9 @@ public class Consumer : IConsumer
         this.eventBus = eventBus;
         disposables =
         [
-            eventBus.Subscribe<ConnectionRecoveredEvent>(OnConnectionRecovered),
-            eventBus.Subscribe<ConnectionDisconnectedEvent>(OnConnectionDisconnected),
-            Timers.Start(RestartConsumingPeriodically, RestartConsumingPeriod, RestartConsumingPeriod, logger)
+            eventBus.SubscribeAsync<ConnectionRecoveredEvent>((@event, _) => OnConnectionRecoveredAsync(@event, default)),
+            eventBus.SubscribeAsync<ConnectionDisconnectedEvent>((@event, _) => OnConnectionDisconnectedAsync(@event, default)),
+            Timers.StartAsync(RestartConsumingPeriodicallyAsync, RestartConsumingPeriod, RestartConsumingPeriod, logger)
         ];
     }
 
@@ -144,7 +145,7 @@ public class Consumer : IConsumer
         if (disposed)
             throw new ObjectDisposedException(nameof(Consumer));
 
-        lock (mutex)
+        using (await mutex.AcquireAsync(cancellationToken))
         {
             if (consumer != null)
                 throw new InvalidOperationException("Consumer has already started");
@@ -155,13 +156,12 @@ public class Consumer : IConsumer
 
         var status = await consumer.StartConsumingAsync(cancellationToken: cancellationToken);
         foreach (var queue in status.Started)
-            eventBus.Publish(new StartConsumingSucceededEvent(this, queue));
+            await eventBus.PublishAsync(new StartConsumingSucceededEvent(this, queue), cancellationToken);
         foreach (var queue in status.Failed)
-            eventBus.Publish(new StartConsumingFailedEvent(this, queue));
+            await eventBus.PublishAsync(new StartConsumingFailedEvent(this, queue), cancellationToken);
     }
-
     /// <inheritdoc />
-    public virtual void Dispose()
+    public virtual async ValueTask DisposeAsync()
     {
         if (disposed) return;
 
@@ -173,57 +173,60 @@ public class Consumer : IConsumer
         foreach (var disposable in disposables)
             disposable.Dispose();
 
-        consumerToDispose.DisposeAsync().GetAwaiter().GetResult();
+        await consumerToDispose.DisposeAsync();
 
-        eventBus.Publish(new StoppedConsumingEvent(this));
+        await eventBus.PublishAsync(new StoppedConsumingEvent(this));
+        mutex.Dispose();
     }
 
     private async Task InternalConsumerOnCancelledAsync(object? sender, InternalConsumerCancelledEventArgs e)
     {
         if (e.Active.Count == 0)
-            Dispose();
-        await Task.CompletedTask;
+            await DisposeAsync();
     }
 
-    private void OnConnectionDisconnected(in ConnectionDisconnectedEvent @event)
+    private async ValueTask OnConnectionDisconnectedAsync(ConnectionDisconnectedEvent @event, CancellationToken cancellationToken)
     {
         if (@event.Type != PersistentConnectionType.Consumer) return;
 
-        consumer?.StopConsumingAsync().GetAwaiter().GetResult();
+        if (consumer != null)
+        {
+            await consumer.StopConsumingAsync(cancellationToken);
+        }
     }
 
-    private void OnConnectionRecovered(in ConnectionRecoveredEvent @event)
+    private async ValueTask OnConnectionRecoveredAsync(ConnectionRecoveredEvent @event, CancellationToken cancellationToken)
     {
         if (@event.Type != PersistentConnectionType.Consumer) return;
 
         var consumerToRestart = consumer;
         if (consumerToRestart == null) return;
 
-        var status = consumerToRestart.StartConsumingAsync(false).GetAwaiter().GetResult();
+        var status = await consumerToRestart.StartConsumingAsync(false, cancellationToken);
 
         foreach (var queue in status.Started)
-            eventBus.Publish(new StartConsumingSucceededEvent(this, queue));
+            await eventBus.PublishAsync(new StartConsumingSucceededEvent(this, queue), cancellationToken);
         foreach (var queue in status.Failed)
-            eventBus.Publish(new StartConsumingFailedEvent(this, queue));
+            await eventBus.PublishAsync(new StartConsumingFailedEvent(this, queue), cancellationToken);
 
         if (ContainsOnlyFailedExclusiveQueues(status))
-            Dispose();
+            await DisposeAsync();
     }
 
-    private void RestartConsumingPeriodically()
+    private async Task  RestartConsumingPeriodicallyAsync(CancellationToken cancellationToken)
     {
         var consumerToRestart = consumer;
         if (consumerToRestart == null) return;
 
-        var status = consumerToRestart.StartConsumingAsync(false).GetAwaiter().GetResult();
+        var status = await consumerToRestart.StartConsumingAsync(false, cancellationToken);
 
         foreach (var queue in status.Started)
-            eventBus.Publish(new StartConsumingSucceededEvent(this, queue));
+            await eventBus.PublishAsync(new StartConsumingSucceededEvent(this, queue), cancellationToken);
         foreach (var queue in status.Failed)
-            eventBus.Publish(new StartConsumingFailedEvent(this, queue));
+            await eventBus.PublishAsync(new StartConsumingFailedEvent(this, queue), cancellationToken);
 
         if (ContainsOnlyFailedExclusiveQueues(status))
-            Dispose();
+            await DisposeAsync();
     }
 
     private static bool ContainsOnlyFailedExclusiveQueues(InternalConsumerStatus status)

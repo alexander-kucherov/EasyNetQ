@@ -42,7 +42,7 @@ public class When_send_receive_multiple_message_types : IDisposable, IAsyncLifet
         var rabbitsSink = new MessagesSink(MessagesCount);
         var bunnies = MessagesFactories.Create(MessagesCount, i => new BunnyMessage(i));
         var rabbits = MessagesFactories.Create(MessagesCount, i => new RabbitMessage(i));
-        using (
+        await using (
             await bus.SendReceive.ReceiveAsync(
                 queue,
                 x => x.Add<BunnyMessage>(bunniesSink.Receive).Add<RabbitMessage>(rabbitsSink.Receive),

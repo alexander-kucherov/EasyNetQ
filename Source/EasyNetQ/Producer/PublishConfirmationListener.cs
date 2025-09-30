@@ -24,9 +24,9 @@ public class PublishConfirmationListener : IPublishConfirmationListener
         subscriptions =
         [
             eventBus.Subscribe<MessageConfirmationEvent>(OnMessageConfirmation),
-            eventBus.Subscribe<ChannelRecoveredEvent>(OnChannelRecovered),
-            eventBus.Subscribe<ChannelShutdownEvent>(OnChannelShutdown),
-            eventBus.Subscribe<ReturnedMessageEvent>(OnReturnedMessage)
+            eventBus.SubscribeAsync<ChannelRecoveredEvent>((e, _) => OnChannelRecoveredAsync(e)),
+            eventBus.SubscribeAsync<ChannelShutdownEvent>((e, _) => OnChannelShutdownAsync(e)),
+            eventBus.SubscribeAsync<ReturnedMessageEvent>((e, _) => OnReturnedMessageAsync(e))
         ];
     }
 
@@ -72,33 +72,30 @@ public class PublishConfirmationListener : IPublishConfirmationListener
             Confirm(confirmation, deliveryTag, type);
     }
 
-    private void OnChannelRecovered(in ChannelRecoveredEvent @event)
+    private async ValueTask OnChannelRecoveredAsync(ChannelRecoveredEvent @event)
     {
-        var nextPublishSequenceNumber = @event.Channel.GetNextPublishSequenceNumberAsync()
+        var nextPublishSequenceNumber = await @event.Channel.GetNextPublishSequenceNumberAsync()
             .ConfigureAwait(false)
-            .GetAwaiter().GetResult();
+            ;
         if (nextPublishSequenceNumber == 0)
             return;
 
         InterruptUnconfirmedRequests(@event.Channel.ChannelNumber);
     }
 
-    private void OnChannelShutdown(in ChannelShutdownEvent @event)
+    private async ValueTask OnChannelShutdownAsync(ChannelShutdownEvent @event)
     {
-        var nextPublishSequenceNumber = @event.Channel.GetNextPublishSequenceNumberAsync()
-            .ConfigureAwait(false)
-            .GetAwaiter().GetResult();
+        var nextPublishSequenceNumber = await @event.Channel.GetNextPublishSequenceNumberAsync()
+            .ConfigureAwait(false);
         if (nextPublishSequenceNumber == 0)
             return;
 
         InterruptUnconfirmedRequests(@event.Channel.ChannelNumber);
     }
 
-    private void OnReturnedMessage(in ReturnedMessageEvent @event)
+    private async ValueTask OnReturnedMessageAsync(ReturnedMessageEvent @event)
     {
-        var nextPublishSequenceNumber = @event.Channel.GetNextPublishSequenceNumberAsync()
-            .ConfigureAwait(false)
-            .GetAwaiter().GetResult();
+        var nextPublishSequenceNumber = await @event.Channel.GetNextPublishSequenceNumberAsync();
 
         if (nextPublishSequenceNumber == 0)
             return;

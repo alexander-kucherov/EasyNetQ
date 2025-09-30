@@ -41,8 +41,9 @@ public interface IAdvancedBus
     /// </summary>
     /// <param name="configure">
     /// Fluent configuration e.g. x => x.WithPriority(10)</param>
+    /// <param name="cancellationToken"></param>
     /// <returns>A disposable to cancel the consumer</returns>
-    IDisposable Consume(Action<IConsumeConfiguration> configure);
+    Task<IAsyncDisposable> ConsumeAsync(Action<IConsumeConfiguration> configure, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publish a message as a .NET type when the type is only known at runtime.

@@ -24,7 +24,7 @@ var eventQueue = await bus.Advanced.QueueDeclareAsync(
     cancellationToken: cts.Token
 );
 
-using var eventsConsumer = bus.Advanced.Consume(eventQueue, (_, _, _) => { });
+using var eventsConsumer = bus.Advanced.ConsumeAsync(eventQueue, (_, _, _) => { });
 
 while (!cts.IsCancellationRequested)
 {

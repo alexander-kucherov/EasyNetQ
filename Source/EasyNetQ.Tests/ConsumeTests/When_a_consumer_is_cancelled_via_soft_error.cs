@@ -17,7 +17,7 @@ public class When_a_consumer_is_cancelled_via_soft_error : IAsyncLifetime
         var queue = new Queue("my_queue", false);
 
 #pragma warning disable IDISP004
-        mockBuilder.Bus.Advanced.Consume(
+        mockBuilder.Bus.Advanced.ConsumeAsync(
 #pragma warning restore IDISP004
             queue,
             (_, _, _) => Task.Run(() => { }),

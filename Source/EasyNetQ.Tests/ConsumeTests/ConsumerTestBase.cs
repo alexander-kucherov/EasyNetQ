@@ -21,30 +21,29 @@ public abstract class ConsumerTestBase : IAsyncLifetime
     // populated when a message is delivered
     protected IBasicProperties OriginalProperties;
 
-    public ConsumerTestBase()
+    protected ConsumerTestBase()
     {
         ConsumeErrorStrategy = Substitute.For<IConsumeErrorStrategy>();
         MockBuilder = new MockBuilder(x => x.AddSingleton(ConsumeErrorStrategy));
-        AdditionalSetUp();
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public Task InitializeAsync() => InitializeAsyncCore();
+
+    protected virtual Task InitializeAsyncCore() => Task.CompletedTask;
 
     public async Task DisposeAsync()
     {
         await MockBuilder.DisposeAsync();
     }
-
-    protected abstract void AdditionalSetUp();
-
-    protected IDisposable StartConsumer(
+ 
+    protected async Task<IAsyncDisposable> StartConsumerAsync(
         Func<ReadOnlyMemory<byte>, MessageProperties, MessageReceivedInfo, CancellationToken, AckStrategyAsync> handler,
         bool autoAck = false
     )
     {
         ConsumerWasInvoked = false;
         var queue = new Queue("my_queue", false);
-        return MockBuilder.Bus.Advanced.Consume(
+        return await MockBuilder.Bus.Advanced.ConsumeAsync(
             queue,
             (body, properties, messageInfo, ct) =>
             {
@@ -66,11 +65,6 @@ public abstract class ConsumerTestBase : IAsyncLifetime
                 c.WithConsumerTag(ConsumerTag);
             }
         );
-    }
-
-    protected void DeliverMessage()
-    {
-        DeliverMessageAsync().GetAwaiter().GetResult();
     }
 
     protected Task DeliverMessageAsync()

@@ -16,7 +16,7 @@ public class When_a_consumer_is_started_on_exclusive_queue_and_connection_is_dro
 
         var queue = new Queue("my_queue", false, true);
         using var cancelSubscription = mockBuilder.Bus.Advanced
-            .Consume(queue, async (_, _, _) => await Task.Run(() => { }));
+            .ConsumeAsync(queue, async (_, _, _) => await Task.Run(() => { }));
 
         using var stopped = new AutoResetEvent(false);
 #pragma warning disable IDISP004

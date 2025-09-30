@@ -127,7 +127,7 @@ public class RabbitAdvancedBus : IAdvancedBus, IDisposable
     #region Consume
 
     /// <inheritdoc />
-    public IDisposable Consume(Action<IConsumeConfiguration> configure)
+    public async Task<IAsyncDisposable> ConsumeAsync(Action<IConsumeConfiguration> configure, CancellationToken cancellationToken = default)
     {
         var consumeConfiguration = new ConsumeConfiguration(configuration.PrefetchCount, handlerCollectionFactory);
         configure(consumeConfiguration);
@@ -165,7 +165,7 @@ public class RabbitAdvancedBus : IAdvancedBus, IDisposable
             ).ToDictionary(x => x.Key, x => x.Value)
         );
         var consumer = consumerFactory.CreateConsumer(consumerConfiguration);
-        consumer.StartConsumingAsync().GetAwaiter().GetResult();
+        await consumer.StartConsumingAsync(cancellationToken);
         return consumer;
     }
 
@@ -655,7 +655,7 @@ public class RabbitAdvancedBus : IAdvancedBus, IDisposable
             );
         }
 
-        eventBus.Publish(
+        await eventBus.PublishAsync(
             new PublishedMessageEvent(context.Exchange, context.RoutingKey, context.Properties, context.Body)
         );
     }

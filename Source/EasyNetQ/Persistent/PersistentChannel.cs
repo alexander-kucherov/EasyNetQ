@@ -207,19 +207,17 @@ public class PersistentChannel : IPersistentChannel
         channel.BasicAcksAsync -= OnAckAsync;
     }
 
-    private Task OnChannelRecoveredAsync(object? sender, AsyncEventArgs e)
+    private async Task OnChannelRecoveredAsync(object? sender, AsyncEventArgs e)
     {
-        eventBus.Publish(new ChannelRecoveredEvent((IChannel)sender!));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(new ChannelRecoveredEvent((IChannel)sender!));
     }
 
-    private Task OnChannelShutdownAsync(object? sender, ShutdownEventArgs e)
+    private async Task OnChannelShutdownAsync(object? sender, ShutdownEventArgs e)
     {
-        eventBus.Publish(new ChannelShutdownEvent((IChannel)sender!));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(new ChannelShutdownEvent((IChannel)sender!));
     }
 
-    private Task OnReturnAsync(object? sender, BasicReturnEventArgs args)
+    private async Task OnReturnAsync(object? sender, BasicReturnEventArgs args)
     {
         var messageProperties = new MessageProperties(args.BasicProperties);
         var messageReturnedInfo = new MessageReturnedInfo(args.Exchange, args.RoutingKey, args.ReplyText);
@@ -229,20 +227,17 @@ public class PersistentChannel : IPersistentChannel
             messageProperties,
             messageReturnedInfo
         );
-        eventBus.Publish(@event);
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(@event);
     }
 
-    private Task OnAckAsync(object? sender, BasicAckEventArgs args)
+    private async Task OnAckAsync(object? sender, BasicAckEventArgs args)
     {
-        eventBus.Publish(MessageConfirmationEvent.Ack((IChannel)sender!, args.DeliveryTag, args.Multiple));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(MessageConfirmationEvent.Ack((IChannel)sender!, args.DeliveryTag, args.Multiple));
     }
 
-    private Task OnNackAsync(object? sender, BasicNackEventArgs args)
+    private async Task OnNackAsync(object? sender, BasicNackEventArgs args)
     {
-        eventBus.Publish(MessageConfirmationEvent.Nack((IChannel)sender!, args.DeliveryTag, args.Multiple));
-        return Task.CompletedTask;
+        await eventBus.PublishAsync(MessageConfirmationEvent.Nack((IChannel)sender!, args.DeliveryTag, args.Multiple));
     }
 
     private static ExceptionVerdict GetExceptionVerdict(Exception exception)

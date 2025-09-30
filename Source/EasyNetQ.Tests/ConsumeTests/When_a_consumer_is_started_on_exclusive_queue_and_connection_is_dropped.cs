@@ -13,9 +13,12 @@ public class When_a_consumer_is_started_on_exclusive_queue_and_connection_is_dro
     public When_a_consumer_is_started_on_exclusive_queue_and_connection_is_dropped()
     {
         mockBuilder = new MockBuilder();
+    }
 
+    public async Task InitializeAsync()
+    {
         var queue = new Queue("my_queue", false, true);
-        using var cancelSubscription = mockBuilder.Bus.Advanced
+        await using var cancelSubscription = await mockBuilder.Bus.Advanced
             .ConsumeAsync(queue, async (_, _, _) => await Task.Run(() => { }));
 
         using var stopped = new AutoResetEvent(false);
@@ -23,16 +26,14 @@ public class When_a_consumer_is_started_on_exclusive_queue_and_connection_is_dro
         mockBuilder.EventBus.Subscribe((in StoppedConsumingEvent _) => stopped.Set());
 #pragma warning restore IDISP004
 
-        mockBuilder.EventBus.Publish(new ConnectionDisconnectedEvent(PersistentConnectionType.Consumer, Substitute.For<AmqpTcpEndpoint>(), "Unknown"));
-        mockBuilder.EventBus.Publish(new ConnectionRecoveredEvent(PersistentConnectionType.Consumer, Substitute.For<AmqpTcpEndpoint>()));
+        await mockBuilder.EventBus.PublishAsync(new ConnectionDisconnectedEvent(PersistentConnectionType.Consumer, Substitute.For<AmqpTcpEndpoint>(), "Unknown"));
+        await mockBuilder.EventBus.PublishAsync(new ConnectionRecoveredEvent(PersistentConnectionType.Consumer, Substitute.For<AmqpTcpEndpoint>()));
 
         if (!stopped.WaitOne(5000))
         {
             throw new TimeoutException();
         }
     }
-
-    public Task InitializeAsync() => Task.CompletedTask;
 
     public async Task DisposeAsync()
     {

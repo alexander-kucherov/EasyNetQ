@@ -6,12 +6,13 @@ using EasyNetQ.Persistent;
 using EasyNetQ.Topology;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable IDISP026
 namespace EasyNetQ;
 
 /// <summary>
 ///     Default implementation of EasyNetQ's request-response pattern
 /// </summary>
-public class DefaultRpc : IRpc, IDisposable
+public class DefaultRpc : IRpc, IAsyncDisposable
 {
     protected const string IsFaultedKey = "IsFaulted";
     protected const string ExceptionMessageKey = "ExceptionMessage";
@@ -53,7 +54,7 @@ public class DefaultRpc : IRpc, IDisposable
         this.typeNameSerializer = typeNameSerializer;
         this.correlationIdGenerationStrategy = correlationIdGenerationStrategy;
 
-        eventSubscription = eventBus.Subscribe<ConnectionRecoveredEvent>(OnConnectionRecovered);
+        eventSubscription = eventBus.SubscribeAsync<ConnectionRecoveredEvent>((e, _) => OnConnectionRecoveredAsync(e));
     }
 
     /// <inheritdoc />
@@ -99,7 +100,7 @@ public class DefaultRpc : IRpc, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual Task<IDisposable> RespondAsync<TRequest, TResponse>(
+    public virtual Task<IAsyncDisposable> RespondAsync<TRequest, TResponse>(
         Func<TRequest, CancellationToken, Task<TResponse>> responder,
         Action<IResponderConfiguration> configure,
         CancellationToken cancellationToken = default
@@ -115,15 +116,15 @@ public class DefaultRpc : IRpc, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual void Dispose()
+    public virtual async ValueTask DisposeAsync()
     {
         eventSubscription.Dispose();
         foreach (var responseSubscription in responseSubscriptions.Values)
-            responseSubscription.Unsubscribe();
+            await responseSubscription.UnsubscribeFuncAsync();
         responseSubscriptionsLock.Dispose();
     }
 
-    private void OnConnectionRecovered(in ConnectionRecoveredEvent @event)
+    private async ValueTask OnConnectionRecoveredAsync(ConnectionRecoveredEvent @event)
     {
         if (@event.Type != PersistentConnectionType.Consumer)
             return;
@@ -135,7 +136,8 @@ public class DefaultRpc : IRpc, IDisposable
         responseSubscriptions.Clear();
 
         foreach (var responseAction in responseActionsValues) responseAction.OnFailure();
-        foreach (var responseSubscription in responseSubscriptionsValues) responseSubscription.Unsubscribe();
+        foreach (var responseSubscription in responseSubscriptionsValues)
+            await responseSubscription.UnsubscribeFuncAsync();
     }
 
     protected void DeRegisterResponseActions(string correlationId)
@@ -210,14 +212,13 @@ public class DefaultRpc : IRpc, IDisposable
             await advancedBus.BindAsync(exchange, queue, queue.Name, cancellationToken).ConfigureAwait(false);
         }
 
-        var subscription = advancedBus.ConsumeAsync<TResponse>(
+        var subscription = await advancedBus.ConsumeAsync<TResponse>(
             queue,
             (message, _) =>
             {
                 if (message.Properties.CorrelationId != null && responseActions.TryRemove(message.Properties.CorrelationId, out var responseAction))
                     responseAction.OnSuccess(message);
-            }
-        );
+            }, cancellationToken: cancellationToken);
         responseSubscriptions.TryAdd(rpcKey, new ResponseSubscription(queue.Name, subscription));
 
         logger.LogDebug("Subscription for {requestType}/{responseType} is created", requestType, responseType);
@@ -260,7 +261,7 @@ public class DefaultRpc : IRpc, IDisposable
             .ConfigureAwait(false);
     }
 
-    private async Task<IDisposable> RespondAsyncInternal<TRequest, TResponse>(
+    private async Task<IAsyncDisposable> RespondAsyncInternal<TRequest, TResponse>(
         Func<TRequest, CancellationToken, Task<TResponse>> responder,
         Action<IResponderConfiguration> configure,
         CancellationToken cancellationToken
@@ -288,11 +289,10 @@ public class DefaultRpc : IRpc, IDisposable
 
         await advancedBus.BindAsync(exchange, queue, routingKey, cancellationToken).ConfigureAwait(false);
 
-        return advancedBus.ConsumeAsync<TRequest>(
+        return await advancedBus.ConsumeAsync<TRequest>(
             queue,
             (message, _, cancellation) => RespondToMessageAsync(responder, message, cancellation),
-            c => c.WithPrefetchCount(responderConfiguration.PrefetchCount)
-        );
+            c => c.WithPrefetchCount(responderConfiguration.PrefetchCount), cancellationToken: cancellationToken);
     }
 
     private async Task RespondToMessageAsync<TRequest, TResponse>(
@@ -379,13 +379,13 @@ public class DefaultRpc : IRpc, IDisposable
 
     protected readonly struct ResponseSubscription
     {
-        public ResponseSubscription(string queueName, IDisposable subscription)
+        public ResponseSubscription(string queueName, IAsyncDisposable subscription)
         {
             QueueName = queueName;
-            Unsubscribe = subscription.Dispose;
+            UnsubscribeFuncAsync = subscription.DisposeAsync;
         }
 
         public string QueueName { get; }
-        public Action Unsubscribe { get; }
+        public Func<ValueTask> UnsubscribeFuncAsync { get; }
     }
 }

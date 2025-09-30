@@ -42,7 +42,7 @@ public class When_publish_and_subscribe_with_delay_using_delay_exchange_with_pub
         var messagesSink = new MessagesSink(MessagesCount);
         var messages = MessagesFactories.Create(MessagesCount);
 
-        using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, cts.Token))
+        await using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, cts.Token))
         {
             await bus.Scheduler.FuturePublishBatchAsync(messages, TimeSpan.FromSeconds(5), "#", cts.Token);
 

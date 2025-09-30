@@ -16,7 +16,7 @@ public class When_a_responder_is_cancelled : IAsyncLifetime
     {
         using var cde = new AsyncCountdownEvent(1);
 
-        var responder = mockBuilder.Rpc.Respond<RpcRequest, RpcResponse>(
+        var responder = mockBuilder.Rpc.RespondAsync<RpcRequest, RpcResponse>(
             async (_, ct) =>
             {
                 cde.Decrement();

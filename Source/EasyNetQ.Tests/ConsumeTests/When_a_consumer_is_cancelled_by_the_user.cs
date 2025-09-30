@@ -12,25 +12,26 @@ public class When_a_consumer_is_cancelled_by_the_user : IAsyncLifetime
     public When_a_consumer_is_cancelled_by_the_user()
     {
         mockBuilder = new MockBuilder();
-
+    }
+#pragma warning restore IDISP004
+    public async Task InitializeAsync()
+    {
         var queue = new Queue("my_queue", false);
 
-        var cancelSubscription = mockBuilder.Bus.Advanced
+        var cancelSubscription = await mockBuilder.Bus.Advanced
             .ConsumeAsync(queue, async (_, _, _) => await Task.Run(() => { }));
 
         using var are = new AutoResetEvent(false);
 
         using var _ = mockBuilder.EventBus.Subscribe((in ConsumerChannelDisposedEvent _) => are.Set());
 
-        cancelSubscription.Dispose();
+        await cancelSubscription.DisposeAsync();
 
         if (!are.WaitOne(5000))
         {
             throw new TimeoutException();
         }
     }
-#pragma warning restore IDISP004
-    public Task InitializeAsync() => Task.CompletedTask;
 
     public async Task DisposeAsync()
     {

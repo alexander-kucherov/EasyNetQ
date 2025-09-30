@@ -43,8 +43,8 @@ public class When_publish_and_subscribe_with_delay_using_dead_letter_exchange_wi
         var firstTopicMessages = MessagesFactories.Create(MessagesCount);
         var secondTopicMessagesSink = new MessagesSink(MessagesCount);
         var secondTopicMessages = MessagesFactories.Create(MessagesCount, MessagesCount);
-        using (await bus.PubSub.SubscribeAsync<Message>(Guid.NewGuid().ToString(), firstTopicMessagesSink.Receive, x => x.WithTopic("first")))
-        using (await bus.PubSub.SubscribeAsync<Message>(Guid.NewGuid().ToString(), secondTopicMessagesSink.Receive, x => x.WithTopic("second")))
+        await using (await bus.PubSub.SubscribeAsync<Message>(Guid.NewGuid().ToString(), firstTopicMessagesSink.Receive, x => x.WithTopic("first"), cancellationToken: cts.Token))
+        await using (await bus.PubSub.SubscribeAsync<Message>(Guid.NewGuid().ToString(), secondTopicMessagesSink.Receive, x => x.WithTopic("second"), cancellationToken: cts.Token))
         {
             await Task.WhenAll(
                 bus.Scheduler.FuturePublishBatchAsync(firstTopicMessages, TimeSpan.FromSeconds(5), "first", cts.Token),

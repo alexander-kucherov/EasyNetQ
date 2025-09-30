@@ -67,9 +67,9 @@ public class AutoSubscriber
     /// </summary>
     /// <param name="consumerTypes">The types to register as consumers.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    public virtual async Task<IDisposable> SubscribeAsync(Type[] consumerTypes, CancellationToken cancellationToken = default)
+    public virtual async Task<IAsyncDisposable> SubscribeAsync(Type[] consumerTypes, CancellationToken cancellationToken = default)
     {
-        var subscriptions = new List<IDisposable>();
+        var subscriptions = new List<IAsyncDisposable>();
 
         foreach (var subscriberConsumerInfo in GetSubscriberConsumerInfos(consumerTypes, typeof(IConsumeAsync<>)))
         {
@@ -90,20 +90,20 @@ public class AutoSubscriber
         }
 
         subscriptions.Reverse();
-        return new AutoSubscribeDisposable(subscriptions);
+        return new AutoSubscribeAsyncDisposable(subscriptions);
     }
 
-    private sealed class AutoSubscribeDisposable : IDisposable
+    private sealed class AutoSubscribeAsyncDisposable : IAsyncDisposable
     {
-        private readonly List<IDisposable> subscriptions;
+        private readonly List<IAsyncDisposable> subscriptions;
 
-        public AutoSubscribeDisposable(List<IDisposable> subscriptions) => this.subscriptions = subscriptions;
+        public AutoSubscribeAsyncDisposable(List<IAsyncDisposable> subscriptions) => this.subscriptions = subscriptions;
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
             foreach (var subscription in subscriptions)
             {
-                subscription.Dispose();
+                await subscription.DisposeAsync();
             }
         }
     }

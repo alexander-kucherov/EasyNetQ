@@ -44,7 +44,7 @@ public class When_publish_and_subscribe_polymorphic : IDisposable, IAsyncLifetim
         var bunnies = MessagesFactories.Create(MessagesCount, i => new BunnyMessage(i));
         var rabbits = MessagesFactories.Create(MessagesCount, MessagesCount, i => new RabbitMessage(i));
 
-        using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, x =>
+        await using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, x =>
                {
                    switch (x)
                    {

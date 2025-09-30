@@ -43,7 +43,7 @@ public class When_publish_and_subscribe_with_topic : IDisposable, IAsyncLifetime
         var firstTopicMessages = MessagesFactories.Create(MessagesCount);
         var secondTopicMessages = MessagesFactories.Create(MessagesCount, MessagesCount);
 
-        using (
+        await using (
             await bus.PubSub.SubscribeAsync<Message>(
                 Guid.NewGuid().ToString(),
                 firstTopicMessagesSink.Receive,
@@ -51,7 +51,7 @@ public class When_publish_and_subscribe_with_topic : IDisposable, IAsyncLifetime
                 cts.Token
             )
         )
-        using (
+        await using (
             await bus.PubSub.SubscribeAsync<Message>(
                 Guid.NewGuid().ToString(),
                 secondTopicMessagesSink.Receive,

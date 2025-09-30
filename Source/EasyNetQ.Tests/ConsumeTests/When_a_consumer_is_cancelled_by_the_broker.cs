@@ -11,20 +11,19 @@ public class When_a_consumer_is_cancelled_by_the_broker : IAsyncLifetime
     public When_a_consumer_is_cancelled_by_the_broker()
     {
         mockBuilder = new MockBuilder();
+    }
 
+    public async Task InitializeAsync()
+    {
         var queue = new Queue("my_queue", false);
 
 #pragma warning disable IDISP004
-        mockBuilder.Bus.Advanced.ConsumeAsync(
+        await mockBuilder.Bus.Advanced.ConsumeAsync(
 #pragma warning restore IDISP004
             queue,
             (_, _, _) => Task.Run(() => { }),
             c => c.WithConsumerTag("consumer_tag")
         );
-    }
-
-    public async Task InitializeAsync()
-    {
         using var are = new AutoResetEvent(false);
 #pragma warning disable IDISP004
         mockBuilder.EventBus.Subscribe((in ConsumerChannelDisposedEvent _) => are.Set());

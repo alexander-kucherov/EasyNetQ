@@ -17,7 +17,7 @@ public static partial class AdvancedBusExtensions
     /// <param name="queue">The queue to take messages from</param>
     /// <param name="handler">The message handler</param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync<T>(
         this IAdvancedBus bus, Queue queue, Action<IMessage<T>, MessageReceivedInfo> handler, CancellationToken cancellationToken = default
     ) => await bus.ConsumeAsync(queue, handler, _ => { }, cancellationToken: cancellationToken);
@@ -32,7 +32,7 @@ public static partial class AdvancedBusExtensions
     /// <param name="configure">
     /// Fluent configuration e.g. x => x.WithPriority(10)</param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync<T>(
         this IAdvancedBus bus,
         Queue queue,
@@ -53,7 +53,7 @@ public static partial class AdvancedBusExtensions
     /// <param name="queue">The queue to take messages from</param>
     /// <param name="handler">The message handler</param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync<T>(
         this IAdvancedBus bus, Queue queue, Func<IMessage<T>, MessageReceivedInfo, Task> handler, CancellationToken cancellationToken = default
     ) => await bus.ConsumeAsync(queue, handler, _ => { }, cancellationToken: cancellationToken);
@@ -69,7 +69,7 @@ public static partial class AdvancedBusExtensions
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync<T>(
         this IAdvancedBus bus,
         Queue queue,
@@ -89,7 +89,7 @@ public static partial class AdvancedBusExtensions
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync<T>(
         this IAdvancedBus bus,
         Queue queue,
@@ -116,7 +116,7 @@ public static partial class AdvancedBusExtensions
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync<T>(
         this IAdvancedBus bus,
         Queue queue,
@@ -155,7 +155,7 @@ public static partial class AdvancedBusExtensions
     /// <param name="queue">The queue to take messages from</param>
     /// <param name="addHandlers">A function to add handlers to the consumer</param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(this IAdvancedBus bus, Queue queue, Action<IHandlerRegistration> addHandlers, CancellationToken cancellationToken = default)
         => await bus.ConsumeAsync(queue, addHandlers, _ => { }, cancellationToken: cancellationToken);
 
@@ -169,7 +169,7 @@ public static partial class AdvancedBusExtensions
     ///    Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
@@ -211,10 +211,17 @@ public static partial class AdvancedBusExtensions
     /// receive context.
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
-        this IAdvancedBus bus, Queue queue, Action<ReadOnlyMemory<byte>, MessageProperties, MessageReceivedInfo> handler, CancellationToken cancellationToken = default
-    ) => await bus.ConsumeAsync(queue, handler, _ => { }, cancellationToken);
+        this IAdvancedBus bus, Queue queue,
+        Action<ReadOnlyMemory<byte>, MessageProperties, MessageReceivedInfo> handler,
+        CancellationToken cancellationToken = default
+    )
+    {
+
+        return await bus.ConsumeAsync(queue, handler, configuration => { }, cancellationToken);
+    }
+
 
     /// <summary>
     /// Consume raw bytes from the queue.
@@ -228,17 +235,19 @@ public static partial class AdvancedBusExtensions
     /// <param name="configure">
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <param name="cancellationToken"></param>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
         Action<ReadOnlyMemory<byte>, MessageProperties, MessageReceivedInfo> handler,
-        Action<ISimpleConsumeConfiguration> configure
+        Action<ISimpleConsumeConfiguration> configure,
+        CancellationToken cancellationToken = default
     )
     {
         var handlerAsync = TaskHelpers.FromAction<ReadOnlyMemory<byte>, MessageProperties, MessageReceivedInfo>((m, p, i, _) => handler(m, p, i));
 
-        return await bus.ConsumeAsync(queue, handlerAsync, configure);
+        return await bus.ConsumeAsync(queue, handlerAsync, configure, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -250,7 +259,7 @@ public static partial class AdvancedBusExtensions
     /// The message handler. Takes the message body, message properties and some information about the
     /// receive context. Returns a Task.
     /// </param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
@@ -266,12 +275,14 @@ public static partial class AdvancedBusExtensions
     /// The message handler. Takes the message body, message properties and some information about the
     /// receive context. Returns a Task.
     /// </param>
-    /// <returns>A disposable to cancel the consumer</returns>
-    public static IDisposable ConsumeAsync(
+    /// <param name="cancellationToken"></param>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
+    public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
-        Func<ReadOnlyMemory<byte>, MessageProperties, MessageReceivedInfo, Task<AckStrategyAsync>> handler
-    ) => bus.ConsumeAsync(queue, handler, _ => { });
+        Func<ReadOnlyMemory<byte>, MessageProperties, MessageReceivedInfo, Task<AckStrategyAsync>> handler,
+        CancellationToken cancellationToken = default
+    ) => await bus.ConsumeAsync(queue, handler, _ => { }, cancellationToken: cancellationToken);
 
     /// <summary>
     /// Consume raw bytes from the queue.
@@ -286,7 +297,7 @@ public static partial class AdvancedBusExtensions
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
@@ -308,7 +319,7 @@ public static partial class AdvancedBusExtensions
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
@@ -327,7 +338,7 @@ public static partial class AdvancedBusExtensions
     /// receive context. Returns a Task.
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(this IAdvancedBus bus, Queue queue, MessageHandler handler, CancellationToken cancellationToken = default)
         => await bus.ConsumeAsync(queue, handler, _ => { }, cancellationToken: cancellationToken);
 
@@ -344,7 +355,7 @@ public static partial class AdvancedBusExtensions
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
@@ -370,7 +381,7 @@ public static partial class AdvancedBusExtensions
     /// receive context. Returns a Task.
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,
@@ -392,7 +403,7 @@ public static partial class AdvancedBusExtensions
     /// Fluent configuration e.g. x => x.WithPriority(10)
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns>A disposable to cancel the consumer</returns>
+    /// <returns>An AsyncDisposable to cancel the consumer</returns>
     public static async Task<IAsyncDisposable> ConsumeAsync(
         this IAdvancedBus bus,
         Queue queue,

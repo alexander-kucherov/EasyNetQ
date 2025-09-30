@@ -13,11 +13,14 @@ public class When_a_consumer_is_cancelled_via_soft_error : IAsyncLifetime
     public When_a_consumer_is_cancelled_via_soft_error()
     {
         mockBuilder = new MockBuilder();
+    }
 
+    public async Task InitializeAsync()
+    {
         var queue = new Queue("my_queue", false);
 
 #pragma warning disable IDISP004
-        mockBuilder.Bus.Advanced.ConsumeAsync(
+        await mockBuilder.Bus.Advanced.ConsumeAsync(
 #pragma warning restore IDISP004
             queue,
             (_, _, _) => Task.Run(() => { }),
@@ -27,11 +30,6 @@ public class When_a_consumer_is_cancelled_via_soft_error : IAsyncLifetime
         mockBuilder.Consumers[0].Channel.CloseReason.Returns(
             new ShutdownEventArgs(ShutdownInitiator.Application, AmqpErrorCodes.PreconditionFailed, "Oops")
         );
-        
-    }
-
-    public async Task InitializeAsync()
-    {
         await mockBuilder.Consumers[0].HandleBasicCancelAsync("consumer_tag");
         // Wait for a periodic consumer restart
         await Task.Delay(TimeSpan.FromSeconds(10));

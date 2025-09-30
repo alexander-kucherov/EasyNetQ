@@ -44,7 +44,7 @@ public class When_publish_and_subscribe_with_priority : IDisposable, IAsyncLifet
         var lowPriorityMessages = MessagesFactories.Create(MessagesCount, MessagesCount);
 
         var subscriptionId = Guid.NewGuid().ToString();
-        using (
+        await using (
             await bus.PubSub.SubscribeAsync<Message>(
                 subscriptionId, messagesSink.Receive, x => x.WithMaxPriority(2), cts.Token
             )
@@ -59,7 +59,7 @@ public class When_publish_and_subscribe_with_priority : IDisposable, IAsyncLifet
             highPriorityMessages, x => x.WithPriority(HighPriority), cts.Token
         );
 
-        using (
+        await using (
             await bus.PubSub.SubscribeAsync<Message>(
                 subscriptionId, messagesSink.Receive, x => x.WithMaxPriority(2), cts.Token
             )

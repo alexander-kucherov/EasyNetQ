@@ -78,7 +78,7 @@ public sealed class ModelCleanupTests : IAsyncLifetime
 #pragma warning disable IDISP004
         mockBuilder.EventBus.Subscribe((in StartConsumingSucceededEvent _) => waiter.Signal());
 
-        bus.Rpc.Respond<TestRequestMessage, TestResponseMessage>(_ => (TestResponseMessage)null);
+        await bus.Rpc.RespondAsync<TestRequestMessage, TestResponseMessage>(_ => (TestResponseMessage)null);
 #pragma warning restore IDISP004
         if (!waiter.Wait(5000))
             throw new TimeoutException();

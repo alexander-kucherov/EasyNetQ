@@ -97,14 +97,13 @@ public class DefaultPubSub : IPubSub
         foreach (var topic in subscriptionConfiguration.Topics.DefaultIfEmpty("#"))
             await advancedBus.BindAsync(exchange, queue, topic, cts.Token).ConfigureAwait(false);
 
-        var consumerCancellation = advancedBus.ConsumeAsync<T>(
+        var consumerCancellation = await advancedBus.ConsumeAsync<T>(
             queue,
             (message, _, cancellation) => onMessage(message.Body!, cancellation),
             c => c.WithPrefetchCount(subscriptionConfiguration.PrefetchCount)
                 .WithPriority(subscriptionConfiguration.Priority)
                 .WithExclusive(subscriptionConfiguration.IsExclusive)
-                .WithConsumerTag(conventions.ConsumerTagConvention())
-        );
+                .WithConsumerTag(conventions.ConsumerTagConvention()), cancellationToken: cancellationToken);
 
         return new SubscriptionResult(exchange, queue, consumerCancellation);
     }

@@ -42,7 +42,7 @@ public class When_publish_and_subscribe_with_publish_confirms : IDisposable, IAs
         var messagesSink = new MessagesSink(MessagesCount);
         var messages = MessagesFactories.Create(MessagesCount);
 
-        using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, cts.Token))
+        await using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, cts.Token))
         {
             await bus.PubSub.PublishBatchAsync(messages, cts.Token);
 

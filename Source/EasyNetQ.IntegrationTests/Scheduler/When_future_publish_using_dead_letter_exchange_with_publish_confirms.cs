@@ -45,7 +45,7 @@ public class When_publish_and_subscribe_using_delay_using_dead_letter_exchange_w
         var messagesSink = new MessagesSink(MessagesCount);
         var messages = MessagesFactories.Create(MessagesCount);
 
-        using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, cts.Token))
+        await using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, cts.Token))
         {
             await bus.Scheduler.FuturePublishBatchAsync(messages, TimeSpan.FromSeconds(5), "#", cts.Token);
 

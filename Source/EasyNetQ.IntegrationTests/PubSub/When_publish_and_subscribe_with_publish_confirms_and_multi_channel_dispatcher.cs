@@ -43,7 +43,7 @@ public class When_publish_and_subscribe_with_publish_confirms_and_multi_channel_
         var messagesSink = new MessagesSink(MessagesCount);
         var messages = MessagesFactories.Create(MessagesCount);
 
-        using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, timeoutCts.Token))
+        await using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, messagesSink.Receive, timeoutCts.Token))
         {
             await bus.PubSub.PublishBatchInParallelAsync(messages, timeoutCts.Token);
 

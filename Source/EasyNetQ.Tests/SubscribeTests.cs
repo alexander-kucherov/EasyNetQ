@@ -35,7 +35,7 @@ public class When_subscribe_is_called : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        subscriptionResult.Dispose();
+        await subscriptionResult.DisposeAsync();
         
         await mockBuilder.DisposeAsync();
     }
@@ -416,15 +416,18 @@ public class When_a_subscription_is_cancelled_by_the_user : IAsyncLifetime
         };
 
         mockBuilder = new MockBuilder(x => x.AddSingleton<IConventions>(conventions));
-        using var subscriptionResult = mockBuilder.PubSub.Subscribe<MyMessage>(subscriptionId, _ => { });
+
+    }
+
+    public async Task InitializeAsync()
+    {
+        await using var subscriptionResult = await mockBuilder.PubSub.SubscribeAsync<MyMessage>(subscriptionId, _ => { });
         using var are = new AutoResetEvent(false);
 #pragma warning disable IDISP004
         mockBuilder.EventBus.Subscribe((in ConsumerChannelDisposedEvent _) => are.Set());
 #pragma warning restore IDISP004
         are.WaitOne(500);
     }
-
-    public Task InitializeAsync() => Task.CompletedTask;
 
     public async Task DisposeAsync()
     {

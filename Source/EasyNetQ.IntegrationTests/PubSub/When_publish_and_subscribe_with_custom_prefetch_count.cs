@@ -50,7 +50,7 @@ public class When_publish_and_subscribe_with_custom_prefetch_count : IDisposable
 
         var started = Stopwatch.GetTimestamp();
 
-        using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, SlowSyncAction))
+        await using (await bus.PubSub.SubscribeAsync<Message>(subscriptionId, SlowSyncAction, cancellationToken: cts.Token))
         {
             await bus.PubSub.PublishBatchAsync(messages, cts.Token);
 

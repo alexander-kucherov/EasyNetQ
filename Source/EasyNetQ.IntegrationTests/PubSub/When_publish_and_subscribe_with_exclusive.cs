@@ -42,7 +42,7 @@ public class When_publish_and_subscribe_with_exclusive : IDisposable, IAsyncLife
 
         var messages = MessagesFactories.Create(MessagesCount);
 
-        using (
+        await using (
             await bus.PubSub.SubscribeAsync<Message>(
                 Guid.NewGuid().ToString(),
                 firstConsumerMessagesSink.Receive,
@@ -54,7 +54,7 @@ public class When_publish_and_subscribe_with_exclusive : IDisposable, IAsyncLife
             // To ensure that ^ subscriber started successfully
             await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
 
-            using (
+            await using (
                 await bus.PubSub.SubscribeAsync<Message>(
                     Guid.NewGuid().ToString(),
                     secondConsumerMessagesSink.Receive,

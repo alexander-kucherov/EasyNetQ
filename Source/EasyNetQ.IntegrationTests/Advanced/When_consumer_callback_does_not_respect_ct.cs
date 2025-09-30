@@ -35,8 +35,8 @@ public class When_consumer_callback_does_not_respect_ct : IAsyncLifetime
         );
         allMessagesReceived.Increment();
 
-        using (
-            bus.Advanced.ConsumeAsync(queue, (_, _, _) =>
+        await using (
+            await bus.Advanced.ConsumeAsync(queue, (_, _, _) =>
             {
                 allMessagesReceived.Decrement();
                 return Task.Delay(-1, CancellationToken.None);

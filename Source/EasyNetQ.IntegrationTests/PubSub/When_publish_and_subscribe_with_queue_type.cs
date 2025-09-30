@@ -41,7 +41,7 @@ public class When_publish_and_subscribe_with_queue_type : IDisposable, IAsyncLif
         var messagesSink = new MessagesSink(MessagesCount);
         var messages = CreateMessages(MessagesCount);
 
-        using (await bus.PubSub.SubscribeAsync<QuorumQueueMessage>(subscriptionId, messagesSink.Receive))
+        await using (await bus.PubSub.SubscribeAsync<QuorumQueueMessage>(subscriptionId, messagesSink.Receive, cancellationToken: cts.Token))
         {
             await bus.PubSub.PublishBatchAsync(messages, cts.Token);
 

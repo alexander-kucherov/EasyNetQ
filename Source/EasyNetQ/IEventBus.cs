@@ -5,6 +5,8 @@ namespace EasyNetQ;
 
 /// <inheritdoc />
 public delegate void TEventHandler<TEvent>(in TEvent @event) where TEvent : struct;
+/// <inheritdoc />
+public delegate ValueTask TEventHandlerAsync<TEvent>(in TEvent @event, CancellationToken cancellationToken) where TEvent : struct;
 
 /// <summary>
 ///     An internal pub-sub bus to distribute events within EasyNetQ
@@ -19,12 +21,28 @@ public interface IEventBus
     void Publish<TEvent>(in TEvent @event) where TEvent : struct;
 
     /// <summary>
+    ///     Publishes the event
+    /// </summary>
+    /// <param name="event">The event</param>
+    /// <param name="cancellationToken"></param>
+    /// <typeparam name="TEvent">The event type</typeparam>
+    ValueTask PublishAsync<TEvent>(in TEvent @event, CancellationToken cancellationToken) where TEvent : struct;
+
+    /// <summary>
     ///     Subscribes to the event type
     /// </summary>
     /// <param name="eventHandler">The event handler</param>
     /// <typeparam name="TEvent">The event type</typeparam>
     /// <returns>Disposable to unsubscribe</returns>
     IDisposable Subscribe<TEvent>(TEventHandler<TEvent> eventHandler) where TEvent : struct;
+
+    /// <summary>
+    ///     Subscribes to the event type
+    /// </summary>
+    /// <param name="eventHandler">The event handler</param>
+    /// <typeparam name="TEvent">The event type</typeparam>
+    /// <returns>Disposable to unsubscribe</returns>
+    IDisposable SubscribeAsync<TEvent>(TEventHandlerAsync<TEvent> eventHandler) where TEvent : struct;
 }
 
 /// <inheritdoc />
@@ -39,13 +57,25 @@ public sealed class EventBus : IEventBus
         this.logger = logger;
     }
 
+
+    /// <inheritdoc />
+    public ValueTask PublishAsync<TEvent>(in TEvent @event, CancellationToken cancellationToken) where TEvent : struct
+    {
+        if (subscriptions.TryGetValue(typeof(TEvent), out var handlersObj))
+        {
+            return ((Handlers<TEvent>)handlersObj).HandleAsync(@event, cancellationToken);
+        }
+
+        return default;
+    }
+
     /// <inheritdoc />
     public void Publish<TEvent>(in TEvent @event) where TEvent : struct
     {
         if (!subscriptions.TryGetValue(typeof(TEvent), out var handlers))
             return;
 
-        ((Handlers<TEvent>)handlers).Handle(@event);
+        ((Handlers<TEvent>)handlers).HandleAsync(@event).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
@@ -62,62 +92,93 @@ public sealed class EventBus : IEventBus
             }
         }
         var typedHandlers = (Handlers<TEvent>)handlers;
+        var wrappedHandler = WrapSync(eventHandler);
+        typedHandlers.Add(wrappedHandler);
+        return new Subscription<TEvent>(typedHandlers, wrappedHandler);
+    }
+
+    /// <inheritdoc />
+    public IDisposable SubscribeAsync<TEvent>(TEventHandlerAsync<TEvent> eventHandler) where TEvent : struct
+    {
+        if (!subscriptions.TryGetValue(typeof(TEvent), out var handlers))
+        {
+            lock (subscriptionLock)
+            {
+                if (!subscriptions.TryGetValue(typeof(TEvent), out handlers))
+                {
+                    handlers = subscriptions[typeof(TEvent)] = new Handlers<TEvent>(logger);
+                }
+            }
+        }
+        var typedHandlers = (Handlers<TEvent>)handlers;
         typedHandlers.Add(eventHandler);
         return new Subscription<TEvent>(typedHandlers, eventHandler);
+    }
+
+    private static TEventHandlerAsync<TEvent> WrapSync<TEvent>(TEventHandler<TEvent> sync) where TEvent : struct
+    {
+        return (in TEvent e, CancellationToken _) =>
+        {
+            sync(in e);
+            return default;
+        };
     }
 
     private sealed class Handlers<TEvent> where TEvent : struct
     {
         private readonly ILogger logger;
         private readonly object mutex = new();
-        private volatile List<TEventHandler<TEvent>> handlers = new();
+        private volatile List<TEventHandlerAsync<TEvent>> handlers = new();
 
         public Handlers(ILogger logger)
         {
             this.logger = logger;
         }
 
-        public void Add(TEventHandler<TEvent> eventHandler)
+        public void Add(TEventHandlerAsync<TEvent> eventHandler)
         {
             lock (mutex)
             {
-                var newHandlers = new List<TEventHandler<TEvent>>(handlers);
+                var newHandlers = new List<TEventHandlerAsync<TEvent>>(handlers);
                 newHandlers.Add(eventHandler);
                 handlers = newHandlers;
             }
         }
 
-        public void Remove(TEventHandler<TEvent> eventHandler)
+        public void Remove(TEventHandlerAsync<TEvent> eventHandler)
         {
             lock (mutex)
             {
-                var newHandlers = new List<TEventHandler<TEvent>>(handlers);
+                var newHandlers = new List<TEventHandlerAsync<TEvent>>(handlers);
                 newHandlers.Remove(eventHandler);
                 handlers = newHandlers;
             }
         }
 
-        public void Handle(in TEvent @event)
+
+        public async ValueTask HandleAsync(TEvent @event, CancellationToken cancellationToken = default)
         {
             // ReSharper disable once InconsistentlySynchronizedField
-            foreach (var handler in handlers)
+            foreach (var h in handlers)
+            {
                 try
                 {
-                    handler(in @event);
+                    await h(in @event, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception exception)
+                catch (Exception ex)
                 {
-                    logger.LogError(exception, "Failed to handle {event}", @event);
+                    logger.LogError(ex, "Failed to handle event {Event}", @event);
                 }
+            }
         }
     }
 
     private sealed class Subscription<TEvent> : IDisposable where TEvent : struct
     {
         private readonly Handlers<TEvent> handlers;
-        private readonly TEventHandler<TEvent> eventHandler;
+        private readonly TEventHandlerAsync<TEvent> eventHandler;
 
-        public Subscription(Handlers<TEvent> handlers, TEventHandler<TEvent> eventHandler)
+        public Subscription(Handlers<TEvent> handlers, TEventHandlerAsync<TEvent> eventHandler)
         {
             this.handlers = handlers;
             this.eventHandler = eventHandler;
